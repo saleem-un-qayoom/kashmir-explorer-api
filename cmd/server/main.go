@@ -87,6 +87,7 @@ func main() {
 	authSvc   := auth.NewService(pool, cfg.JWT, cfg.OTP, cfg.OAuth)
 	destSvc   := destination.NewService(pool)
 	trekSvc   := trek.NewService(pool)
+	trekV3    := trek.NewV3(pool)
 	advSvc    := advisory.NewService(pool, hub)
 	wthSvc    := weather.NewService(pool, cfg.OpenWeatherKey)
 	provSvc   := provider.NewService(pool)
@@ -154,7 +155,11 @@ func main() {
 			r.Get("/{slug}",      trekSvc.Get)
 			r.Get("/{slug}/path", trekSvc.Path)
 			r.Get("/{slug}/density", crowdSvc.Density)
+			r.Get("/{slug}/reports", reportSvc.PublicList) // V3 · community trail conditions
 		})
+
+		// V3 · public share-link viewer (no auth)
+		r.Get("/tracks/share/{token}", trekV3.ShareTrack)
 
 		// Semantic search (public).
 		r.Get("/search", searchSvc.Search)
@@ -229,6 +234,12 @@ func main() {
 			r.Post("/treks/{slug}/ping",   crowdSvc.Ping)
 			r.Post("/treks/{slug}/report", reportSvc.Create)
 
+			// V3 · tracks + summit log
+			r.Post("/tracks",              trekV3.CreateTrack)
+			r.Get( "/me/tracks",           trekV3.MyTracks)
+			r.Post("/treks/{slug}/bag",    trekV3.Bag)
+			r.Get( "/me/completions",      trekV3.MyCompletions)
+
 			// Trip groups (live location share).
 			r.Post("/groups",                groupSvc.Create)
 			r.Post("/groups/join",           groupSvc.Join)
@@ -268,6 +279,9 @@ func main() {
 			// Trek reports queue.
 			r.Get("/reports",                  reportSvc.AdminList)
 			r.Post("/reports/{id}/resolve",    reportSvc.AdminResolve)
+
+			// V3 · all track recordings (moderation / abuse triage)
+			r.Get("/tracks",                   trekV3.AdminTracks)
 
 			// Embeddings reindex.
 			r.Post("/reindex",                 searchSvc.Reindex)
