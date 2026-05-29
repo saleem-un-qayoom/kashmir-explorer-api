@@ -90,6 +90,12 @@ func main() {
 	trekSvc   := trek.NewService(pool)
 	trekV3    := trek.NewV3(pool)
 	advSvc    := advisory.NewService(pool, hub)
+
+	// Start the external advisory fetcher (NDMA + IMD) in the background.
+	// Uses a background context so it outlives the 10s DB-connect timeout.
+	fetcherCtx, cancelFetcher := context.WithCancel(context.Background())
+	defer cancelFetcher()
+	go advisory.NewFetcher(pool, hub).Start(fetcherCtx)
 	wthSvc    := weather.NewService(pool, cfg.OpenWeatherKey)
 	provSvc   := provider.NewService(pool)
 	bookSvc   := booking.NewService(pool, cfg.Razorpay)
@@ -279,7 +285,9 @@ func main() {
 			r.Get("/destinations/{id}",        destSvc.AdminGet)
 			r.Post("/destinations",            destSvc.AdminCreate)
 			r.Put("/destinations/{id}",        destSvc.AdminUpdate)
-			r.Delete("/destinations/{id}",     destSvc.AdminDelete)
+			r.Delete("/destinations/{id}",          destSvc.AdminDelete)
+			r.Post("/destinations/{id}/restore",    destSvc.AdminRestore)
+			r.Delete("/destinations/{id}/permanent", destSvc.AdminDeletePermanent)
 
 			// Treks
 			r.Get("/treks",                    trekSvc.AdminList)

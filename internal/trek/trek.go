@@ -16,20 +16,20 @@ type Service struct{ pool *pgxpool.Pool }
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 type Trek struct {
-	ID            string  `json:"id"`
-	Slug          string  `json:"slug"`
-	Name          string  `json:"name"`
-	Difficulty    string  `json:"difficulty"`
-	TrekType      string  `json:"trek_type"`
+	ID            string   `json:"id"`
+	Slug          string   `json:"slug"`
+	Name          string   `json:"name"`
+	Difficulty    *string  `json:"difficulty,omitempty"`
+	TrekType      *string  `json:"trek_type,omitempty"`
 	DurationDays  *int     `json:"duration_days,omitempty"`
 	DistanceKm    *float64 `json:"distance_km,omitempty"`
 	MaxAltitudeM  *int     `json:"max_altitude_m,omitempty"`
-	StartPoint    *string `json:"start_point,omitempty"`
-	EndPoint      *string `json:"end_point,omitempty"`
-	BestMonths    []int   `json:"best_months,omitempty"`
+	StartPoint    *string  `json:"start_point,omitempty"`
+	EndPoint      *string  `json:"end_point,omitempty"`
+	BestMonths    []int    `json:"best_months,omitempty"`
 	Permits       []string `json:"permits,omitempty"`
-	AmsRisk       bool    `json:"ams_risk"`
-	Status        string  `json:"status"`
+	AmsRisk       bool     `json:"ams_risk"`
+	Status        *string  `json:"status,omitempty"`
 	ClosureReason *string `json:"closure_reason,omitempty"`
 	Tagline       *string `json:"tagline,omitempty"`
 	Uniqueness    *string `json:"uniqueness,omitempty"`
@@ -124,12 +124,40 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		response.NotFound(w, "trek not found")
 		return
 	}
-	response.OK(w, map[string]any{
-		"trek":           t,
-		"waypoints":      waypoints,
-		"gear_list":      gearList,
-		"trail_sections": sections,
-	})
+	// Flatten the response — the mobile `TrekDetail` type expects every
+	// scalar trek field at the root level alongside the JSONB extras.
+	flat := map[string]any{
+		"id":                     t.ID,
+		"slug":                   t.Slug,
+		"name":                   t.Name,
+		"difficulty":             t.Difficulty,
+		"trek_type":              t.TrekType,
+		"duration_days":          t.DurationDays,
+		"distance_km":            t.DistanceKm,
+		"max_altitude_m":         t.MaxAltitudeM,
+		"start_point":            t.StartPoint,
+		"end_point":              t.EndPoint,
+		"best_months":            t.BestMonths,
+		"permits":                t.Permits,
+		"ams_risk":               t.AmsRisk,
+		"status":                 t.Status,
+		"closure_reason":         t.ClosureReason,
+		"tagline":                t.Tagline,
+		"uniqueness":             t.Uniqueness,
+		"rating":                 t.Rating,
+		"review_count":           t.ReviewCount,
+		"guide_available":        t.GuideAvailable,
+		"guide_price_inr":        t.GuidePriceINR,
+		"features":               t.Features,
+		"activities":             t.Activities,
+		"elevation_gain_m":       t.ElevationGainM,
+		"route_type":             t.RouteType,
+		"hero_image_url":         t.HeroImageURL,
+		"waypoints":              waypoints,
+		"gear_list":              gearList,
+		"trail_sections":         sections,
+	}
+	response.OK(w, flat)
 }
 
 // GET /v1/treks/{slug}/path — densified polyline + waypoints for offline nav.

@@ -3,6 +3,7 @@ package destination
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -37,10 +38,11 @@ type Destination struct {
 	ReviewCount int    `json:"review_count"`
 	DistanceFromSrinagar *int `json:"distance_from_srinagar_km,omitempty"`
 	EntryFeeINR int    `json:"entry_fee_inr"`
-	Permits    []string `json:"permits,omitempty"`
-	Categories []string `json:"categories,omitempty"`
-	Features   []string `json:"features,omitempty"` // AllTrails-style tags (migration 0010)
-	HeroImageURL *string `json:"hero_image_url,omitempty"` // joined from images WHERE is_hero=true
+	Permits      []string `json:"permits,omitempty"`
+	Categories   []string `json:"categories,omitempty"`
+	Features     []string `json:"features,omitempty"`
+	Description  *string  `json:"description,omitempty"`
+	HeroImageURL *string  `json:"hero_image_url,omitempty"`
 }
 
 // GET /v1/destinations  ?region=&category=&season=&sort=&page=&limit=
@@ -128,9 +130,43 @@ func (s *Service) Featured(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/destinations/trending — sorted by recent saves (stubbed = rating).
+// GET /v1/destinations/trending — top-rated published destinations.
+// When save_count / view_count data is available this can be re-ranked;
+// for now rating DESC is a good proxy.
 func (s *Service) Trending(w http.ResponseWriter, r *http.Request) {
-	s.Featured(w, r) // identical shape for now
+	rows, err := s.pool.Query(r.Context(), `
+		SELECT d.id::text, d.slug, d.name, d.tagline, d.uniqueness,
+		       d.altitude_m, d.rating, d.district,
+		       d.distance_from_srinagar_km,
+		       (SELECT url FROM images i
+		         WHERE i.destination_id = d.id
+		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
+		FROM destinations d
+		WHERE d.is_published = true
+		ORDER BY d.is_featured DESC, d.rating DESC
+		LIMIT 10
+	`)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	defer rows.Close()
+	out := []map[string]any{}
+	for rows.Next() {
+		var id, slug, name string
+		var tagline, uniq, district *string
+		var alt, distSgr *int
+		var rating float64
+		var heroURL *string
+		_ = rows.Scan(&id, &slug, &name, &tagline, &uniq, &alt, &rating, &district, &distSgr, &heroURL)
+		out = append(out, map[string]any{
+			"id": id, "slug": slug, "name": name, "tagline": tagline,
+			"uniqueness": uniq, "altitude_m": alt, "rating": rating,
+			"district": district, "distance_from_srinagar_km": distSgr,
+			"hero_image_url": heroURL,
+		})
+	}
+	response.OK(w, out)
 }
 
 // GET /v1/destinations/nearby?lat=&lng=&radius_km=&limit=
@@ -210,7 +246,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	var d Destination
 	err := s.pool.QueryRow(r.Context(), `
 		SELECT d.id::text, d.slug, d.name, d.name_urdu, d.name_hindi, d.district,
-		       d.tagline, d.uniqueness,
+		       d.tagline, d.uniqueness, d.description,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type, d.rating, d.review_count,
 		       d.distance_from_srinagar_km, d.entry_fee_inr, d.permits,
@@ -221,7 +257,8 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		FROM destinations d WHERE d.slug = $1 AND d.is_published = true
 	`, slug).Scan(
 		&d.ID, &d.Slug, &d.Name, &d.NameUrdu, &d.NameHindi, &d.District,
-		&d.Tagline, &d.Uniqueness, &d.Lng, &d.Lat,
+		&d.Tagline, &d.Uniqueness, &d.Description,
+		&d.Lng, &d.Lat,
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType, &d.Rating, &d.ReviewCount,
 		&d.DistanceFromSrinagar, &d.EntryFeeINR, &d.Permits,
 		&d.Features, &d.HeroImageURL,
@@ -298,18 +335,32 @@ type AdminDest struct {
 	Categories      []string        `json:"categories"`
 	IsPublished     bool            `json:"is_published"`
 	IsFeatured      bool            `json:"is_featured"`
+	IsDeleted       bool            `json:"is_deleted"`
 	Features        []string        `json:"features"` // AllTrails-style tags
 }
 
 // GET /admin/destinations — all destinations including unpublished
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
-	rows, err := s.pool.Query(r.Context(), `
+	status := r.URL.Query().Get("status")
+	where := ""
+	switch status {
+	case "published":
+		where = "WHERE d.is_published = true AND d.is_deleted = false"
+	case "unpublished":
+		where = "WHERE d.is_published = false AND d.is_deleted = false"
+	case "deleted":
+		where = "WHERE d.is_deleted = true"
+	default:
+		where = ""
+	}
+
+	query := fmt.Sprintf(`
 		SELECT d.id::text, d.slug, d.name, d.name_urdu, d.name_hindi, d.district,
 		       r.slug, d.tagline, d.uniqueness, d.description,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
 		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
-		       d.permits, d.is_published, d.is_featured,
+		       d.permits, d.is_published, d.is_featured, d.is_deleted,
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
@@ -319,9 +370,12 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
 		LEFT JOIN categories c ON c.id = dc.category_id
 		LEFT JOIN destination_activities a ON a.destination_id = d.id
+		%s
 		GROUP BY d.id, r.slug
 		ORDER BY d.name
-	`)
+	`, where)
+
+	rows, err := s.pool.Query(r.Context(), query)
 	if err != nil {
 		response.Internal(w, err)
 		return
@@ -337,7 +391,7 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 			&d.Lng, &d.Lat,
 			&d.AltitudeM, &d.BestMonths, &d.SeasonType,
 			&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
-			&d.Permits, &d.IsPublished, &d.IsFeatured,
+			&d.Permits, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 			&d.NetworkCoverage, &d.Practical,
 			&d.Categories, &d.Activities, &d.Features,
 		); err != nil {
@@ -359,7 +413,7 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
 		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
-		       d.permits, d.is_published, d.is_featured,
+		       d.permits, d.is_published, d.is_featured, d.is_deleted,
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
@@ -377,9 +431,9 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		&d.Lng, &d.Lat,
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType,
 		&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
-		&d.Permits, &d.IsPublished, &d.IsFeatured,
+		&d.Permits, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 		&d.NetworkCoverage, &d.Practical,
-		&d.Categories, &d.Activities,
+		&d.Categories, &d.Activities, &d.Features,
 	)
 	if err != nil {
 		response.Internal(w, err)
@@ -437,7 +491,9 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		VALUES ($1, $2, $3, $4,
 			(SELECT id FROM regions WHERE slug = $5),
 			$6, $7, $8, $9,
-			ST_GeogFromText('POINT(' || $10::text || ' ' || $11::text || ')'),
+			CASE WHEN $10::float8 IS NOT NULL AND $11::float8 IS NOT NULL
+			     THEN ST_SetSRID(ST_MakePoint($10, $11), 4326)::geography
+			     ELSE NULL END,
 			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
 		RETURNING id::text
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
@@ -484,7 +540,9 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 			name = $1, name_urdu = $2, name_hindi = $3, slug = $4,
 			region_id = (SELECT id FROM regions WHERE slug = $5),
 			district = $6, tagline = $7, uniqueness = $8, description = $9,
-			location = ST_GeogFromText('POINT(' || $10::text || ' ' || $11::text || ')'),
+			location = CASE WHEN $10::float8 IS NOT NULL AND $11::float8 IS NOT NULL
+			                THEN ST_SetSRID(ST_MakePoint($10, $11), 4326)::geography
+			                ELSE location END,
 			altitude_m = $12, best_months = $13, season_type = $14,
 			distance_from_srinagar_km = $15, entry_fee_inr = $16,
 			permits = $17,
@@ -529,12 +587,34 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	_, err := s.pool.Exec(r.Context(), `UPDATE destinations SET is_published = false WHERE id = $1`, id)
+	_, err := s.pool.Exec(r.Context(), `UPDATE destinations SET is_deleted = true, is_published = false WHERE id = $1`, id)
 	if err != nil {
 		response.Internal(w, err)
 		return
 	}
-	response.OK(w, map[string]string{"unpublished": id})
+	response.OK(w, map[string]string{"deleted": id})
+}
+
+// POST /admin/destinations/{id}/restore
+func (s *Service) AdminRestore(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `UPDATE destinations SET is_deleted = false WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, map[string]string{"restored": id})
+}
+
+// DELETE /admin/destinations/{id}/permanent
+func (s *Service) AdminDeletePermanent(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM destinations WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, map[string]string{"deleted": id})
 }
 
 // ─── Admin: Categories ──────────────────────────────────────────
