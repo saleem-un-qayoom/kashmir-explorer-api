@@ -18,19 +18,25 @@ func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 // GET /v1/permits
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT id::text, name, required, office, processing_days,
+		SELECT id::text, slug, name, required, office, processing_days,
 		       cost_inr, validity, status, notes, official_url
 		FROM permits ORDER BY id
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
 	for rows.Next() {
-		var id, name, req, office, days, cost, validity, status, notes, url string
-		_ = rows.Scan(&id, &name, &req, &office, &days, &cost, &validity, &status, &notes, &url)
+		var id, slug, name, req, office, days, cost, validity, status, notes, url string
+		if err := rows.Scan(&id, &slug, &name, &req, &office, &days, &cost, &validity, &status, &notes, &url); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
-			"id": id, "name": name, "required": req, "office": office,
+			"id": id, "slug": slug, "name": name, "required": req, "office": office,
 			"processing_days": days, "cost_inr": cost, "validity": validity,
 			"status": status, "notes": notes, "official_url": url,
 		})
@@ -52,13 +58,19 @@ func (s *Service) Check(w http.ResponseWriter, r *http.Request) {
 		FROM destinations d
 		WHERE d.slug = ANY($1) AND COALESCE(array_length(d.permits, 1), 0) > 0
 	`, slugs)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	required := []string{}
 	for rows.Next() {
 		var p string
-		_ = rows.Scan(&p)
+		if err := rows.Scan(&p); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		required = append(required, p)
 	}
 
@@ -68,18 +80,21 @@ func (s *Service) Check(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prows, err := s.pool.Query(r.Context(), `
-		SELECT id::text, name, required, office, processing_days, cost_inr, validity, status, notes, official_url
+		SELECT id::text, slug, name, required, office, processing_days, cost_inr, validity, status, notes, official_url
 		FROM permits WHERE LOWER(SUBSTRING(name FROM 1 FOR 3)) = ANY($1::TEXT[])
 	`, lcShort(required))
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer prows.Close()
 
 	out := []map[string]any{}
 	for prows.Next() {
-		var id, name, req, office, days, cost, validity, status, notes, url string
-		_ = prows.Scan(&id, &name, &req, &office, &days, &cost, &validity, &status, &notes, &url)
+		var id, slug, name, req, office, days, cost, validity, status, notes, url string
+		_ = prows.Scan(&id, &slug, &name, &req, &office, &days, &cost, &validity, &status, &notes, &url)
 		out = append(out, map[string]any{
-			"id": id, "name": name, "required": req, "office": office,
+			"id": id, "slug": slug, "name": name, "required": req, "office": office,
 			"processing_days": days, "cost_inr": cost, "validity": validity,
 			"status": status, "notes": notes, "official_url": url,
 		})
@@ -130,7 +145,8 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		OfficialURL    *string `json:"official_url"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	var id string
 	err := s.pool.QueryRow(r.Context(), `
@@ -140,7 +156,8 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	`, in.Slug, in.Name, in.Required, in.Office, in.ProcessingDays,
 		in.CostInr, in.Validity, in.Status, in.Notes, in.OfficialURL).Scan(&id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.Created(w, map[string]string{"id": id})
 }
@@ -160,7 +177,8 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 		OfficialURL    *string `json:"official_url"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	_, err := s.pool.Exec(r.Context(), `
 		UPDATE permits SET slug=$1, name=$2, required=$3, office=$4,
@@ -170,7 +188,8 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	`, in.Slug, in.Name, in.Required, in.Office, in.ProcessingDays,
 		in.CostInr, in.Validity, in.Status, in.Notes, in.OfficialURL, id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, map[string]string{"updated": id})
 }
@@ -179,7 +198,8 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM permits WHERE id = $1`, id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.NoContent(w)
 }
@@ -187,7 +207,9 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 func lcShort(in []string) []string {
 	out := make([]string, 0, len(in))
 	for _, s := range in {
-		if len(s) >= 3 { out = append(out, strings.ToLower(s[:3])) }
+		if len(s) >= 3 {
+			out = append(out, strings.ToLower(s[:3]))
+		}
 	}
 	return out
 }

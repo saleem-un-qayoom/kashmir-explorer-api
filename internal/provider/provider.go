@@ -14,23 +14,23 @@ type Service struct{ pool *pgxpool.Pool }
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 type Provider struct {
-	ID              string   `json:"id"`
-	Type            string   `json:"type"`
-	Name            string   `json:"name"`
-	JktdcRegNo      *string  `json:"jktdc_reg_no,omitempty"`
-	Verified        bool     `json:"verified"`
-	BaseLocationText *string `json:"base_location_text,omitempty"`
-	Languages       []string `json:"languages,omitempty"`
-	Rating          float64  `json:"rating"`
-	ReviewCount     int      `json:"review_count"`
-	Capacity        *int     `json:"capacity,omitempty"`
-	Amenities       []string `json:"amenities,omitempty"`
-	PriceINR        int      `json:"price_inr"`
-	PriceUnit       string   `json:"price_unit"`
-	Cancellation    *string  `json:"cancellation,omitempty"`
-	Description     *string  `json:"description,omitempty"`
-	YearsHosting    *int     `json:"years_hosting,omitempty"`
-	ResponseTimeMin *int     `json:"response_time_min,omitempty"`
+	ID               string   `json:"id"`
+	Type             string   `json:"type"`
+	Name             string   `json:"name"`
+	JktdcRegNo       *string  `json:"jktdc_reg_no,omitempty"`
+	Verified         bool     `json:"verified"`
+	BaseLocationText *string  `json:"base_location_text,omitempty"`
+	Languages        []string `json:"languages,omitempty"`
+	Rating           float64  `json:"rating"`
+	ReviewCount      int      `json:"review_count"`
+	Capacity         *int     `json:"capacity,omitempty"`
+	Amenities        []string `json:"amenities,omitempty"`
+	PriceINR         int      `json:"price_inr"`
+	PriceUnit        string   `json:"price_unit"`
+	Cancellation     *string  `json:"cancellation,omitempty"`
+	Description      *string  `json:"description,omitempty"`
+	YearsHosting     *int     `json:"years_hosting,omitempty"`
+	ResponseTimeMin  *int     `json:"response_time_min,omitempty"`
 }
 
 // GET /v1/providers ?type=houseboat&verified=true
@@ -56,9 +56,12 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	out := make([]Provider, 0)
 	for rows.Next() {
 		var p Provider
-		_ = rows.Scan(&p.ID, &p.Type, &p.Name, &p.JktdcRegNo, &p.Verified, &p.BaseLocationText,
+		if err := rows.Scan(&p.ID, &p.Type, &p.Name, &p.JktdcRegNo, &p.Verified, &p.BaseLocationText,
 			&p.Languages, &p.Rating, &p.ReviewCount, &p.Capacity, &p.Amenities, &p.PriceINR, &p.PriceUnit,
-			&p.Cancellation, &p.Description, &p.YearsHosting, &p.ResponseTimeMin)
+			&p.Cancellation, &p.Description, &p.YearsHosting, &p.ResponseTimeMin); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, p)
 	}
 	response.OK(w, out)

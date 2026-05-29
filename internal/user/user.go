@@ -53,7 +53,10 @@ func (s *Service) ListSaved(w http.ResponseWriter, r *http.Request) {
 		var alt *int
 		var rating float64
 		var savedAt any
-		_ = rows.Scan(&id, &slug, &name, &district, &alt, &rating, &savedAt)
+		if err := rows.Scan(&id, &slug, &name, &district, &alt, &rating, &savedAt); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "slug": slug, "name": name, "district": district, "altitude_m": alt, "rating": rating, "saved_at": savedAt})
 	}
 	response.OK(w, out)
@@ -102,7 +105,10 @@ func (s *Service) ListItineraries(w http.ResponseWriter, r *http.Request) {
 		var startDate, createdAt any
 		var isPublic bool
 		var shareToken *string
-		_ = rows.Scan(&id, &title, &dur, &startDate, &isPublic, &shareToken, &createdAt)
+		if err := rows.Scan(&id, &title, &dur, &startDate, &isPublic, &shareToken, &createdAt); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "title": title, "duration": dur, "start_date": startDate, "is_public": isPublic, "share_token": shareToken, "created_at": createdAt})
 	}
 	response.OK(w, out)

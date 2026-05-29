@@ -37,7 +37,9 @@ func (s *Service) Presign(w http.ResponseWriter, r *http.Request) {
 		response.BadRequest(w, "filename required")
 		return
 	}
-	if body.ContentType == "" { body.ContentType = "image/jpeg" }
+	if body.ContentType == "" {
+		body.ContentType = "image/jpeg"
+	}
 	if !allowedType(body.ContentType) {
 		response.BadRequest(w, "content type not allowed")
 		return
@@ -47,7 +49,10 @@ func (s *Service) Presign(w http.ResponseWriter, r *http.Request) {
 	key := buildKey(userID, body.Filename)
 
 	upload, public, err := s.r2.PresignPUT(r.Context(), key, body.ContentType)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	response.OK(w, map[string]any{
 		"upload_url": upload,
@@ -73,6 +78,8 @@ func buildKey(userID, filename string) string {
 	clean = strings.ReplaceAll(clean, " ", "-")
 	clean = strings.ToLower(clean)
 	owner := "anon"
-	if userID != "" { owner = userID }
+	if userID != "" {
+		owner = userID
+	}
 	return "uploads/" + owner + "/" + ts + "-" + hex.EncodeToString(rand4) + "-" + clean
 }

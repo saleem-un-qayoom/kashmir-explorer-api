@@ -24,14 +24,14 @@ type Config struct {
 	OpenWeatherKey  string
 	AnthropicKey    string
 	AnthropicModel  string
-	VoyageKey       string  // text embeddings for pgvector
-	ApplePassTypeID string  // Apple Wallet pass type identifier
+	VoyageKey       string // text embeddings for pgvector
+	ApplePassTypeID string // Apple Wallet pass type identifier
 }
 
 type JWTConfig struct {
-	Secret        string
-	RefreshSecret string
-	AccessTTLHrs  int
+	Secret         string
+	RefreshSecret  string
+	AccessTTLHrs   int
 	RefreshTTLDays int
 }
 

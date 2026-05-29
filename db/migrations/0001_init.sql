@@ -100,7 +100,7 @@ CREATE TABLE treks (
   name              TEXT NOT NULL,
   destination_id    UUID REFERENCES destinations(id) ON DELETE SET NULL,
   difficulty        TEXT NOT NULL,        -- easy | moderate | hard | strenuous
-  trek_type         TEXT NOT NULL,        -- meadow | alpine_lake | glacier | pass | valley
+  trek_type         TEXT NOT NULL,        -- meadow | alpine_lake | glacier | pass | valley | summit | pilgrimage
   duration_days     INT NOT NULL,
   distance_km       NUMERIC(6,2),
   max_altitude_m    INT,

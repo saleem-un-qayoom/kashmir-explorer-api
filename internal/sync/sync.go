@@ -23,7 +23,9 @@ type op struct {
 	Payload json.RawMessage `json:"payload"`
 	Ts      int64           `json:"ts"`
 }
-type req struct{ Ops []op `json:"ops"` }
+type req struct {
+	Ops []op `json:"ops"`
+}
 
 // POST /v1/sync
 func (s *Service) Apply(w http.ResponseWriter, r *http.Request) {
@@ -38,20 +40,32 @@ func (s *Service) Apply(w http.ResponseWriter, r *http.Request) {
 	for _, o := range body.Ops {
 		switch o.Op {
 		case "save":
-			var p struct{ DestinationID string `json:"destination_id"` }
-			if json.Unmarshal(o.Payload, &p) != nil || p.DestinationID == "" { continue }
+			var p struct {
+				DestinationID string `json:"destination_id"`
+			}
+			if json.Unmarshal(o.Payload, &p) != nil || p.DestinationID == "" {
+				continue
+			}
 			_, err := s.pool.Exec(r.Context(),
 				`INSERT INTO saved_destinations (user_id, destination_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 				userID, p.DestinationID)
-			if err == nil { applied++ }
+			if err == nil {
+				applied++
+			}
 
 		case "unsave":
-			var p struct{ DestinationID string `json:"destination_id"` }
-			if json.Unmarshal(o.Payload, &p) != nil || p.DestinationID == "" { continue }
+			var p struct {
+				DestinationID string `json:"destination_id"`
+			}
+			if json.Unmarshal(o.Payload, &p) != nil || p.DestinationID == "" {
+				continue
+			}
 			_, err := s.pool.Exec(r.Context(),
 				`DELETE FROM saved_destinations WHERE user_id=$1 AND destination_id=$2`,
 				userID, p.DestinationID)
-			if err == nil { applied++ }
+			if err == nil {
+				applied++
+			}
 		}
 
 		// Also enqueue audit row so admins can see what was replayed.

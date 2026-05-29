@@ -57,8 +57,12 @@ func (e *Embeddings) EmbedDocs(ctx context.Context, texts []string) ([][]float32
 // EmbedQuery — for the search-side; uses the 'query' direction.
 func (e *Embeddings) EmbedQuery(ctx context.Context, text string) ([]float32, error) {
 	vs, err := e.embed(ctx, []string{text}, "query")
-	if err != nil { return nil, err }
-	if len(vs) == 0 { return nil, errors.New("no embedding returned") }
+	if err != nil {
+		return nil, err
+	}
+	if len(vs) == 0 {
+		return nil, errors.New("no embedding returned")
+	}
 	return vs[0], nil
 }
 
@@ -66,7 +70,9 @@ func (e *Embeddings) embed(ctx context.Context, texts []string, direction string
 	if e.APIKey == "" {
 		return nil, errors.New("VOYAGE_API_KEY not configured")
 	}
-	if len(texts) == 0 { return nil, nil }
+	if len(texts) == 0 {
+		return nil, nil
+	}
 
 	body, _ := json.Marshal(embedReq{Input: texts, Model: embeddingModel, InputType: direction})
 	req, _ := http.NewRequestWithContext(ctx, "POST", "https://api.voyageai.com/v1/embeddings", bytes.NewReader(body))
@@ -74,27 +80,37 @@ func (e *Embeddings) embed(ctx context.Context, texts []string, direction string
 	req.Header.Set("Authorization", "Bearer "+e.APIKey)
 
 	res, err := e.HTTP.Do(req)
-	if err != nil { return nil, fmt.Errorf("voyage call: %w", err) }
+	if err != nil {
+		return nil, fmt.Errorf("voyage call: %w", err)
+	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		buf, _ := io.ReadAll(res.Body)
 		return nil, fmt.Errorf("voyage %d: %s", res.StatusCode, string(buf))
 	}
 	var out embedRes
-	if err := json.NewDecoder(res.Body).Decode(&out); err != nil { return nil, err }
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return nil, err
+	}
 
 	vs := make([][]float32, len(out.Data))
-	for i, d := range out.Data { vs[i] = d.Embedding }
+	for i, d := range out.Data {
+		vs[i] = d.Embedding
+	}
 	return vs, nil
 }
 
 // PgvectorString — Postgres `vector` input format: "[0.1,0.2,...]"
 func PgvectorString(v []float32) string {
-	if len(v) == 0 { return "[]" }
+	if len(v) == 0 {
+		return "[]"
+	}
 	var b bytes.Buffer
 	b.WriteByte('[')
 	for i, f := range v {
-		if i > 0 { b.WriteByte(',') }
+		if i > 0 {
+			b.WriteByte(',')
+		}
 		fmt.Fprintf(&b, "%g", f)
 	}
 	b.WriteByte(']')

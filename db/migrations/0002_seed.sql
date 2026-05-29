@@ -35,7 +35,7 @@ VALUES
     'Gulmarg', 'گلمرگ', 'गुलमर्ग', 'gulmarg',
     (SELECT id FROM regions WHERE slug = 'north'), 'Baramulla',
     'Asia''s highest ski resort. World''s 2nd-highest gondola.',
-    'The Gulmarg Gondola climbs to 4,200m at Apharwat Peak — only Mérida in Venezuela goes higher. 18-hole golf course in summer, deep powder in winter.',
+    'The Gulmarg Gondola climbs to ~3,980m on Kongdoori, a shoulder of 4,390m Apharwat Peak — Asia''s highest cable car. 18-hole golf course in summer, deep powder in winter.',
     ST_GeogFromText('POINT(74.3805 34.0488)'), 2650,
     ARRAY[12,1,2,3,4,5,9,10], 'year-round', 4.8, 1247, 56, 0,
     '{"jio":"good","airtel":"good","bsnl":"patchy"}', '{"atm":true,"fuelKm":2,"toilet":"clean","drone":false}',
@@ -126,7 +126,7 @@ SELECT d.id, c.id FROM destinations d, categories c WHERE
 
 -- Activities (sample)
 INSERT INTO destination_activities (destination_id, activity)
-SELECT d.id, a FROM destinations d, UNNEST(ARRAY['Skiing','Gondola','Golf','Trekking','Photography']) a
+SELECT d.id, a FROM destinations d, UNNEST(ARRAY['skiing','gondola','golf','trekking','photography']) a
 WHERE d.slug = 'gulmarg';
 
 -- Treks (subset)

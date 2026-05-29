@@ -43,7 +43,9 @@ func (o *OpenWeather) Fetch(ctx context.Context, lat, lng float64) (*CurrentWeat
 	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&units=metric&appid=%s", lat, lng, o.APIKey)
 	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	res, err := o.HTTP.Do(req)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		return nil, fmt.Errorf("openweathermap %d", res.StatusCode)
@@ -62,7 +64,7 @@ func (o *OpenWeather) Fetch(ctx context.Context, lat, lng float64) (*CurrentWeat
 			Speed float64 `json:"speed"` // m/s
 		} `json:"wind"`
 		Visibility int `json:"visibility"` // metres
-		Sys struct {
+		Sys        struct {
 			Sunrise int64 `json:"sunrise"`
 			Sunset  int64 `json:"sunset"`
 		} `json:"sys"`
@@ -84,10 +86,14 @@ func (o *OpenWeather) Fetch(ctx context.Context, lat, lng float64) (*CurrentWeat
 	}
 	if len(raw.Weather) > 0 {
 		out.Condition = raw.Weather[0].Main
-		out.Icon      = raw.Weather[0].Icon
+		out.Icon = raw.Weather[0].Icon
 	}
-	if r, ok := raw.Rain["1h"]; ok { out.PrecipMm = r }
-	if s, ok := raw.Snow["1h"]; ok { out.PrecipMm = s }
+	if r, ok := raw.Rain["1h"]; ok {
+		out.PrecipMm = r
+	}
+	if s, ok := raw.Snow["1h"]; ok {
+		out.PrecipMm = s
+	}
 
 	// AQI from a parallel call.
 	out.AQI = o.fetchAQI(ctx, lat, lng)
@@ -115,12 +121,12 @@ func fetchOpenMeteo(ctx context.Context, hc *http.Client, lat, lng float64) (*Cu
 	}
 	var raw struct {
 		Current struct {
-			Temp         float64 `json:"temperature_2m"`
-			Apparent     float64 `json:"apparent_temperature"`
-			Humidity     int     `json:"relative_humidity_2m"`
-			WeatherCode  int     `json:"weather_code"`
-			WindKmh      float64 `json:"wind_speed_10m"`
-			Precip       float64 `json:"precipitation"`
+			Temp        float64 `json:"temperature_2m"`
+			Apparent    float64 `json:"apparent_temperature"`
+			Humidity    int     `json:"relative_humidity_2m"`
+			WeatherCode int     `json:"weather_code"`
+			WindKmh     float64 `json:"wind_speed_10m"`
+			Precip      float64 `json:"precipitation"`
 		} `json:"current"`
 		Daily struct {
 			Sunrise []string `json:"sunrise"`
@@ -156,29 +162,47 @@ func fetchOpenMeteo(ctx context.Context, hc *http.Client, lat, lng float64) (*Cu
 // wmoCondition — WMO weather code → human label (see open-meteo docs).
 func wmoCondition(code int) string {
 	switch {
-	case code == 0:                          return "Clear"
-	case code >= 1 && code <= 3:             return "Clouds"
-	case code == 45 || code == 48:           return "Fog"
-	case code >= 51 && code <= 57:           return "Drizzle"
-	case code >= 61 && code <= 67:           return "Rain"
-	case code >= 71 && code <= 77:           return "Snow"
-	case code >= 80 && code <= 82:           return "Rain"
-	case code >= 85 && code <= 86:           return "Snow"
-	case code >= 95 && code <= 99:           return "Thunderstorm"
-	default:                                 return "Clouds"
+	case code == 0:
+		return "Clear"
+	case code >= 1 && code <= 3:
+		return "Clouds"
+	case code == 45 || code == 48:
+		return "Fog"
+	case code >= 51 && code <= 57:
+		return "Drizzle"
+	case code >= 61 && code <= 67:
+		return "Rain"
+	case code >= 71 && code <= 77:
+		return "Snow"
+	case code >= 80 && code <= 82:
+		return "Rain"
+	case code >= 85 && code <= 86:
+		return "Snow"
+	case code >= 95 && code <= 99:
+		return "Thunderstorm"
+	default:
+		return "Clouds"
 	}
 }
 
 func wmoIcon(code int) string {
 	switch {
-	case code == 0:               return "01d"
-	case code >= 1 && code <= 3:  return "03d"
-	case code == 45 || code == 48: return "50d"
-	case code >= 51 && code <= 67: return "10d"
-	case code >= 71 && code <= 77: return "13d"
-	case code >= 80 && code <= 82: return "09d"
-	case code >= 95:               return "11d"
-	default:                       return "04d"
+	case code == 0:
+		return "01d"
+	case code >= 1 && code <= 3:
+		return "03d"
+	case code == 45 || code == 48:
+		return "50d"
+	case code >= 51 && code <= 67:
+		return "10d"
+	case code >= 71 && code <= 77:
+		return "13d"
+	case code >= 80 && code <= 82:
+		return "09d"
+	case code >= 95:
+		return "11d"
+	default:
+		return "04d"
 	}
 }
 
@@ -186,7 +210,9 @@ func (o *OpenWeather) fetchAQI(ctx context.Context, lat, lng float64) int {
 	url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/air_pollution?lat=%f&lon=%f&appid=%s", lat, lng, o.APIKey)
 	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	res, err := o.HTTP.Do(req)
-	if err != nil { return 0 }
+	if err != nil {
+		return 0
+	}
 	defer res.Body.Close()
 	var raw struct {
 		List []struct {

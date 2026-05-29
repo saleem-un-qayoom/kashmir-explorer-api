@@ -44,12 +44,18 @@ type createTrackReq struct {
 
 func (s *V3) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
-	if userID == "" { response.Unauthorized(w, "login required"); return }
+	if userID == "" {
+		response.Unauthorized(w, "login required")
+		return
+	}
 	var body createTrackReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
-	if body.Name == "" { body.Name = "Untitled hike" }
+	if body.Name == "" {
+		body.Name = "Untitled hike"
+	}
 	if body.Polyline == nil || len(body.Polyline) == 0 {
 		body.Polyline = json.RawMessage("[]")
 	}
@@ -82,7 +88,10 @@ func (s *V3) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	`, userID, trekID, body.Name, body.StartedAt, body.EndedAt,
 		body.DistanceM, body.DurationS, body.GainM, body.LossM, body.MaxAltitudeM,
 		string(body.Polyline), shareToken, body.IsPublic).Scan(&id)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	response.Created(w, map[string]any{
 		"id": id, "share_token": shareToken,
@@ -91,7 +100,10 @@ func (s *V3) CreateTrack(w http.ResponseWriter, r *http.Request) {
 
 func (s *V3) MyTracks(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
-	if userID == "" { response.Unauthorized(w, "login required"); return }
+	if userID == "" {
+		response.Unauthorized(w, "login required")
+		return
+	}
 
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, name, started_at, ended_at,
@@ -103,7 +115,10 @@ func (s *V3) MyTracks(w http.ResponseWriter, r *http.Request) {
 		ORDER BY created_at DESC
 		LIMIT 100
 	`, userID)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -114,8 +129,11 @@ func (s *V3) MyTracks(w http.ResponseWriter, r *http.Request) {
 		var maxAlt *int
 		var trekSlug, share *string
 		var isPub bool
-		_ = rows.Scan(&id, &name, &started, &ended, &dist, &dur, &gain, &maxAlt,
-			&trekSlug, &share, &isPub, &created)
+		if err := rows.Scan(&id, &name, &started, &ended, &dist, &dur, &gain, &maxAlt,
+			&trekSlug, &share, &isPub, &created); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "name": name, "started_at": started, "ended_at": ended,
 			"distance_m": dist, "duration_s": dur, "gain_m": gain,
@@ -144,7 +162,10 @@ func (s *V3) ShareTrack(w http.ResponseWriter, r *http.Request) {
 		WHERE tr.share_token = $1 AND tr.is_public = true
 	`, token).Scan(&id, &name, &started, &ended, &dist, &dur, &gain, &maxAlt,
 		&polyline, &trekSlug)
-	if err != nil { response.NotFound(w, "track not found"); return }
+	if err != nil {
+		response.NotFound(w, "track not found")
+		return
+	}
 
 	response.OK(w, map[string]any{
 		"id": id, "name": name, "started_at": started, "ended_at": ended,
@@ -163,7 +184,10 @@ type bagReq struct {
 
 func (s *V3) Bag(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
-	if userID == "" { response.Unauthorized(w, "login required"); return }
+	if userID == "" {
+		response.Unauthorized(w, "login required")
+		return
+	}
 	slug := chi.URLParam(r, "slug")
 
 	var body bagReq
@@ -173,7 +197,8 @@ func (s *V3) Bag(w http.ResponseWriter, r *http.Request) {
 	if err := s.pool.QueryRow(r.Context(),
 		`SELECT id::text FROM treks WHERE slug = $1`, slug,
 	).Scan(&trekID); err != nil {
-		response.NotFound(w, "trek not found"); return
+		response.NotFound(w, "trek not found")
+		return
 	}
 
 	var id string
@@ -186,14 +211,20 @@ func (s *V3) Bag(w http.ResponseWriter, r *http.Request) {
 		              completed_at = now()
 		RETURNING id::text
 	`, userID, trekID, body.Notes, body.TrackRecordingID).Scan(&id)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	response.Created(w, map[string]any{"id": id, "trek_slug": slug})
 }
 
 func (s *V3) MyCompletions(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
-	if userID == "" { response.Unauthorized(w, "login required"); return }
+	if userID == "" {
+		response.Unauthorized(w, "login required")
+		return
+	}
 
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT c.id::text, c.completed_at, c.notes,
@@ -204,7 +235,10 @@ func (s *V3) MyCompletions(w http.ResponseWriter, r *http.Request) {
 		WHERE c.user_id = $1 AND c.trek_id IS NOT NULL
 		ORDER BY c.completed_at DESC
 	`, userID)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -213,7 +247,10 @@ func (s *V3) MyCompletions(w http.ResponseWriter, r *http.Request) {
 		var notes, trackID *string
 		var completedAt any
 		var maxAlt *int
-		_ = rows.Scan(&id, &completedAt, &notes, &slug, &name, &maxAlt, &diff, &trackID)
+		if err := rows.Scan(&id, &completedAt, &notes, &slug, &name, &maxAlt, &diff, &trackID); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "completed_at": completedAt, "notes": notes,
 			"trek_slug": slug, "trek_name": name, "max_altitude_m": maxAlt,
@@ -236,7 +273,10 @@ func (s *V3) AdminTracks(w http.ResponseWriter, r *http.Request) {
 		ORDER BY tr.created_at DESC
 		LIMIT 200
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -247,7 +287,10 @@ func (s *V3) AdminTracks(w http.ResponseWriter, r *http.Request) {
 		var pub bool
 		var created any
 		var slug *string
-		_ = rows.Scan(&id, &name, &user, &dist, &dur, &gain, &maxAlt, &pub, &created, &slug)
+		if err := rows.Scan(&id, &name, &user, &dist, &dur, &gain, &maxAlt, &pub, &created, &slug); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "name": name, "user": user,
 			"distance_m": dist, "duration_s": dur, "gain_m": gain,

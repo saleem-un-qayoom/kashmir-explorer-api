@@ -65,11 +65,15 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	if body.EndDate != "" {
 		start, _ := time.Parse("2006-01-02", body.StartDate)
 		end, _ := time.Parse("2006-01-02", body.EndDate)
-		if d := int(end.Sub(start).Hours() / 24); d > 0 { nights = d }
+		if d := int(end.Sub(start).Hours() / 24); d > 0 {
+			nights = d
+		}
 	}
 
 	base := priceINR
-	if unit == "per-night" { base = priceINR * nights }
+	if unit == "per-night" {
+		base = priceINR * nights
+	}
 	gst := base * 18 / 100
 	fee := base * 3 / 100
 	total := base + gst + fee
@@ -125,7 +129,10 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 		FROM bookings b JOIN providers p ON p.id = b.provider_id
 		WHERE b.user_id = $1 ORDER BY b.start_date DESC
 	`, userID)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -134,12 +141,15 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 		var phone *string
 		var start, end time.Time
 		var guests, total int
-		_ = rows.Scan(&id, &ref, &start, &end, &guests, &total, &status, &name, &typ, &phone)
+		if err := rows.Scan(&id, &ref, &start, &end, &guests, &total, &status, &name, &typ, &phone); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "ref": ref,
 			"start_date": start.Format("2006-01-02"),
 			"end_date":   end.Format("2006-01-02"),
-			"guests": guests, "total_inr": total, "status": status,
+			"guests":     guests, "total_inr": total, "status": status,
 			"provider": map[string]any{"name": name, "type": typ, "phone": phone},
 			"type":     typ,
 		})
@@ -152,9 +162,9 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := mw.UserID(r)
 	var (
-		bid, ref, status, name, typ string
-		notes, phone *string
-		start, end time.Time
+		bid, ref, status, name, typ   string
+		notes, phone                  *string
+		start, end                    time.Time
 		guests, base, gst, fee, total int
 	)
 	err := s.pool.QueryRow(r.Context(), `
@@ -165,12 +175,15 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		WHERE b.id = $1 AND b.user_id = $2
 	`, id, userID).Scan(&bid, &ref, &start, &end, &guests, &base, &gst, &fee, &total,
 		&status, &notes, &name, &typ, &phone)
-	if err != nil { response.NotFound(w, "booking not found"); return }
+	if err != nil {
+		response.NotFound(w, "booking not found")
+		return
+	}
 	response.OK(w, map[string]any{
 		"id": bid, "ref": ref,
 		"start_date": start.Format("2006-01-02"),
 		"end_date":   end.Format("2006-01-02"),
-		"guests": guests, "base_inr": base, "gst_inr": gst, "fee_inr": fee,
+		"guests":     guests, "base_inr": base, "gst_inr": gst, "fee_inr": fee,
 		"total_inr": total, "status": status, "notes": notes,
 		"provider": map[string]any{"name": name, "type": typ, "phone": phone},
 	})
@@ -184,7 +197,8 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 		UPDATE bookings SET status='cancelled', updated_at=now()
 		WHERE id=$1 AND user_id=$2
 	`, id, userID); err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, map[string]string{"status": "cancelled"})
 }
@@ -193,7 +207,10 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 func (s *Service) RazorpayWebhook(w http.ResponseWriter, r *http.Request) {
 	sig := r.Header.Get("X-Razorpay-Signature")
 	body, err := io.ReadAll(r.Body)
-	if err != nil { response.BadRequest(w, "body read failed"); return }
+	if err != nil {
+		response.BadRequest(w, "body read failed")
+		return
+	}
 
 	if !s.rp.VerifyWebhookSignature(body, sig) {
 		response.Unauthorized(w, "invalid signature")
@@ -213,7 +230,8 @@ func (s *Service) RazorpayWebhook(w http.ResponseWriter, r *http.Request) {
 		} `json:"payload"`
 	}
 	if err := json.Unmarshal(body, &payload); err != nil {
-		response.BadRequest(w, "invalid json"); return
+		response.BadRequest(w, "invalid json")
+		return
 	}
 
 	switch payload.Event {

@@ -47,7 +47,10 @@ func (s *Service) For(w http.ResponseWriter, r *http.Request) {
 		FROM bookings b JOIN providers p ON p.id = b.provider_id
 		WHERE b.id = $1 AND b.user_id = $2
 	`, id, userID).Scan(&ref, &status, &startDate, &endDate, &guests, &total, &providerName, &providerType)
-	if err != nil { response.NotFound(w, "booking not found"); return }
+	if err != nil {
+		response.NotFound(w, "booking not found")
+		return
+	}
 
 	if status != "confirmed" && status != "completed" {
 		response.BadRequest(w, "wallet pass only available after confirmation")
@@ -80,7 +83,9 @@ func (s *Service) ensureWalletCreds(ctx context.Context, bookingID, ref string) 
 		`SELECT COALESCE(wallet_serial, ''), COALESCE(wallet_auth_token, '')
 		 FROM bookings WHERE id = $1`, bookingID,
 	).Scan(&serial, &token)
-	if serial != "" { return serial, token }
+	if serial != "" {
+		return serial, token
+	}
 
 	serial = ref
 	tokBytes := sha1.Sum([]byte(ref + ":" + bookingID))
@@ -92,10 +97,10 @@ func (s *Service) ensureWalletCreds(ctx context.Context, bookingID, ref string) 
 }
 
 type passData struct {
-	PassTypeID, TeamID, Serial, AuthToken    string
-	BookingRef, ProviderName, ProviderType   string
-	StartDate, EndDate                       time.Time
-	Guests, TotalINR                         int
+	PassTypeID, TeamID, Serial, AuthToken  string
+	BookingRef, ProviderName, ProviderType string
+	StartDate, EndDate                     time.Time
+	Guests, TotalINR                       int
 }
 
 func buildPassJSON(p passData) map[string]any {
@@ -123,23 +128,25 @@ func buildPassJSON(p passData) map[string]any {
 				{"key": "provider", "label": "PROVIDER", "value": p.ProviderName},
 			},
 			"secondaryFields": []map[string]any{
-				{"key": "start", "label": "CHECK IN",  "value": p.StartDate.Format("02 Jan 2006")},
-				{"key": "end",   "label": "CHECK OUT", "value": p.EndDate.Format("02 Jan 2006")},
+				{"key": "start", "label": "CHECK IN", "value": p.StartDate.Format("02 Jan 2006")},
+				{"key": "end", "label": "CHECK OUT", "value": p.EndDate.Format("02 Jan 2006")},
 			},
 			"auxiliaryFields": []map[string]any{
 				{"key": "guests", "label": "GUESTS", "value": p.Guests},
-				{"key": "total",  "label": "TOTAL",  "value": fmt.Sprintf("₹%d", p.TotalINR)},
+				{"key": "total", "label": "TOTAL", "value": fmt.Sprintf("₹%d", p.TotalINR)},
 			},
 			"backFields": []map[string]any{
-				{"key": "ref",         "label": "Booking ID",   "value": p.BookingRef},
-				{"key": "support",     "label": "Support",      "value": "support@kashmir.app"},
-				{"key": "cancellation","label": "Cancellation", "value": "Subject to provider's policy. Open the app to manage."},
+				{"key": "ref", "label": "Booking ID", "value": p.BookingRef},
+				{"key": "support", "label": "Support", "value": "support@kashmir.app"},
+				{"key": "cancellation", "label": "Cancellation", "value": "Subject to provider's policy. Open the app to manage."},
 			},
 		},
 	}
 }
 
 func ifEmpty(s, fallback string) string {
-	if s == "" { return fallback }
+	if s == "" {
+		return fallback
+	}
 	return s
 }

@@ -1,7 +1,7 @@
 // Package jobs — background workers. Currently:
 //
-//   • advisory cleaner: expires advisories past their TTL every 5 min
-//   • weather refresh: keeps the top destinations' weather snapshots warm
+//   - advisory cleaner: expires advisories past their TTL every 5 min
+//   - weather refresh: keeps the top destinations' weather snapshots warm
 //
 // Each job runs in a goroutine started by Start(). No external scheduler.
 package jobs

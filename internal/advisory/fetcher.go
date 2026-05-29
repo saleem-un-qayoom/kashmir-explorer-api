@@ -74,13 +74,13 @@ func (f *Fetcher) runAll(ctx context.Context) {
  */
 
 type ndmaWarning struct {
-	Identifier  string `json:"identifier"`
-	Sender      string `json:"sender"`
-	Sent        string `json:"sent"`
-	Status      string `json:"status"`
-	MsgType     string `json:"msgType"`
-	Scope       string `json:"scope"`
-	Info        []struct {
+	Identifier string `json:"identifier"`
+	Sender     string `json:"sender"`
+	Sent       string `json:"sent"`
+	Status     string `json:"status"`
+	MsgType    string `json:"msgType"`
+	Scope      string `json:"scope"`
+	Info       []struct {
 		Category    string `json:"category"`
 		Event       string `json:"event"`
 		Urgency     string `json:"urgency"`
@@ -185,7 +185,7 @@ func (f *Fetcher) fetchIMD(ctx context.Context) {
 			State    string `json:"State_Name"`
 			District string `json:"District_Name"`
 			Warning  string `json:"Warning_Text"`
-			Color    string `json:"Color"`     // RED | ORANGE | YELLOW | GREEN
+			Color    string `json:"Color"` // RED | ORANGE | YELLOW | GREEN
 			Date     string `json:"Valid_Date"`
 		} `json:"data"`
 	}

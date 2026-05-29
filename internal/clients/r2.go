@@ -44,10 +44,10 @@ func (r *R2) PresignPUT(ctx context.Context, key, contentType string) (uploadURL
 	credScope := fmt.Sprintf("%s/%s/%s/aws4_request", date, region, service)
 
 	q := url.Values{}
-	q.Set("X-Amz-Algorithm",     "AWS4-HMAC-SHA256")
-	q.Set("X-Amz-Credential",    fmt.Sprintf("%s/%s", r.AccessKeyID, credScope))
-	q.Set("X-Amz-Date",          ts)
-	q.Set("X-Amz-Expires",       "300")
+	q.Set("X-Amz-Algorithm", "AWS4-HMAC-SHA256")
+	q.Set("X-Amz-Credential", fmt.Sprintf("%s/%s", r.AccessKeyID, credScope))
+	q.Set("X-Amz-Date", ts)
+	q.Set("X-Amz-Expires", "300")
 	q.Set("X-Amz-SignedHeaders", "host")
 	if contentType != "" {
 		q.Set("response-content-type", contentType)
@@ -67,8 +67,8 @@ func (r *R2) PresignPUT(ctx context.Context, key, contentType string) (uploadURL
 		"AWS4-HMAC-SHA256", ts, credScope, hashedReq,
 	}, "\n")
 
-	kDate    := hmacSHA256([]byte("AWS4"+r.SecretAccessKey), date)
-	kRegion  := hmacSHA256(kDate, region)
+	kDate := hmacSHA256([]byte("AWS4"+r.SecretAccessKey), date)
+	kRegion := hmacSHA256(kDate, region)
 	kService := hmacSHA256(kRegion, service)
 	kSigning := hmacSHA256(kService, "aws4_request")
 	signature := hex.EncodeToString(hmacSHA256(kSigning, stringToSign))

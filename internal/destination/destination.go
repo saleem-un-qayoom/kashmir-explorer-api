@@ -21,28 +21,28 @@ func NewService(pool *pgxpool.Pool) *Service {
 }
 
 type Destination struct {
-	ID         string  `json:"id"`
-	Slug       string  `json:"slug"`
-	Name       string  `json:"name"`
-	NameUrdu   *string `json:"name_urdu,omitempty"`
-	NameHindi  *string `json:"name_hindi,omitempty"`
-	District   *string `json:"district,omitempty"`
-	Tagline    *string `json:"tagline,omitempty"`
-	Uniqueness *string `json:"uniqueness,omitempty"`
-	Lat        float64 `json:"lat"`
-	Lng        float64 `json:"lng"`
-	AltitudeM  *int    `json:"altitude_m,omitempty"`
-	BestMonths []int   `json:"best_months,omitempty"`
-	SeasonType *string `json:"season_type,omitempty"`
-	Rating     float64 `json:"rating"`
-	ReviewCount int    `json:"review_count"`
-	DistanceFromSrinagar *int `json:"distance_from_srinagar_km,omitempty"`
-	EntryFeeINR int    `json:"entry_fee_inr"`
-	Permits      []string `json:"permits,omitempty"`
-	Categories   []string `json:"categories,omitempty"`
-	Features     []string `json:"features,omitempty"`
-	Description  *string  `json:"description,omitempty"`
-	HeroImageURL *string  `json:"hero_image_url,omitempty"`
+	ID                   string   `json:"id"`
+	Slug                 string   `json:"slug"`
+	Name                 string   `json:"name"`
+	NameUrdu             *string  `json:"name_urdu,omitempty"`
+	NameHindi            *string  `json:"name_hindi,omitempty"`
+	District             *string  `json:"district,omitempty"`
+	Tagline              *string  `json:"tagline,omitempty"`
+	Uniqueness           *string  `json:"uniqueness,omitempty"`
+	Lat                  float64  `json:"lat"`
+	Lng                  float64  `json:"lng"`
+	AltitudeM            *int     `json:"altitude_m,omitempty"`
+	BestMonths           []int    `json:"best_months,omitempty"`
+	SeasonType           *string  `json:"season_type,omitempty"`
+	Rating               float64  `json:"rating"`
+	ReviewCount          int      `json:"review_count"`
+	DistanceFromSrinagar *int     `json:"distance_from_srinagar_km,omitempty"`
+	EntryFeeINR          int      `json:"entry_fee_inr"`
+	Permits              []string `json:"permits,omitempty"`
+	Categories           []string `json:"categories,omitempty"`
+	Features             []string `json:"features,omitempty"`
+	Description          *string  `json:"description,omitempty"`
+	HeroImageURL         *string  `json:"hero_image_url,omitempty"`
 }
 
 // GET /v1/destinations  ?region=&category=&season=&sort=&page=&limit=
@@ -124,7 +124,10 @@ func (s *Service) Featured(w http.ResponseWriter, r *http.Request) {
 		var tagline, uniq *string
 		var alt *int
 		var rating float64
-		_ = rows.Scan(&id, &slug, &name, &tagline, &uniq, &alt, &rating)
+		if err := rows.Scan(&id, &slug, &name, &tagline, &uniq, &alt, &rating); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "slug": slug, "name": name, "tagline": tagline, "uniqueness": uniq, "altitude_m": alt, "rating": rating})
 	}
 	response.OK(w, out)
@@ -158,7 +161,10 @@ func (s *Service) Trending(w http.ResponseWriter, r *http.Request) {
 		var alt, distSgr *int
 		var rating float64
 		var heroURL *string
-		_ = rows.Scan(&id, &slug, &name, &tagline, &uniq, &alt, &rating, &district, &distSgr, &heroURL)
+		if err := rows.Scan(&id, &slug, &name, &tagline, &uniq, &alt, &rating, &district, &distSgr, &heroURL); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "slug": slug, "name": name, "tagline": tagline,
 			"uniqueness": uniq, "altitude_m": alt, "rating": rating,
@@ -202,7 +208,10 @@ func (s *Service) Nearby(w http.ResponseWriter, r *http.Request) {
 		var id, slug, name, district string
 		var alt *int
 		var rating, km float64
-		_ = rows.Scan(&id, &slug, &name, &district, &alt, &rating, &km)
+		if err := rows.Scan(&id, &slug, &name, &district, &alt, &rating, &km); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "slug": slug, "name": name, "district": district, "altitude_m": alt, "rating": rating, "distance_km": km})
 	}
 	response.OK(w, out)
@@ -234,7 +243,10 @@ func (s *Service) Bbox(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id, slug, name string
 		var lng, lat float64
-		_ = rows.Scan(&id, &slug, &name, &lng, &lat)
+		if err := rows.Scan(&id, &slug, &name, &lng, &lat); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "slug": slug, "name": name, "lng": lng, "lat": lat})
 	}
 	response.OK(w, out)
@@ -282,7 +294,10 @@ func (s *Service) Categories(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id, name, slug string
 		var icon, color *string
-		_ = rows.Scan(&id, &name, &slug, &icon, &color)
+		if err := rows.Scan(&id, &name, &slug, &icon, &color); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "name": name, "slug": slug, "icon": icon, "color": color})
 	}
 	response.OK(w, out)
@@ -300,7 +315,10 @@ func (s *Service) Regions(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id, name, slug string
 		var desc *string
-		_ = rows.Scan(&id, &name, &slug, &desc)
+		if err := rows.Scan(&id, &name, &slug, &desc); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"id": id, "name": name, "slug": slug, "description": desc})
 	}
 	response.OK(w, out)

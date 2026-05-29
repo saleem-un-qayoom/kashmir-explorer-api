@@ -41,7 +41,9 @@ func (r *Rooms) BroadcastRoom(name string, payload any) {
 	r.mu.RLock()
 	rm := r.by[name]
 	r.mu.RUnlock()
-	if rm == nil { return }
+	if rm == nil {
+		return
+	}
 	msg, _ := json.Marshal(payload)
 	rm.mu.RLock()
 	for c := range rm.members {
@@ -56,14 +58,22 @@ func (r *Rooms) BroadcastRoom(name string, payload any) {
 
 func (r *Rooms) handle(w http.ResponseWriter, req *http.Request, key string) {
 	conn, err := upgrader.Upgrade(w, req, nil)
-	if err != nil { slog.Error("ws upgrade", slog.Any("err", err)); return }
+	if err != nil {
+		slog.Error("ws upgrade", slog.Any("err", err))
+		return
+	}
 
 	c := &Client{conn: conn, send: make(chan []byte, 16)}
 	r.mu.Lock()
 	rm, ok := r.by[key]
-	if !ok { rm = &room{members: map[*Client]struct{}{}}; r.by[key] = rm }
+	if !ok {
+		rm = &room{members: map[*Client]struct{}{}}
+		r.by[key] = rm
+	}
 	r.mu.Unlock()
-	rm.mu.Lock(); rm.members[c] = struct{}{}; rm.mu.Unlock()
+	rm.mu.Lock()
+	rm.members[c] = struct{}{}
+	rm.mu.Unlock()
 
 	slog.Info("ws joined room", slog.String("room", key))
 
@@ -74,29 +84,48 @@ func (r *Rooms) handle(w http.ResponseWriter, req *http.Request, key string) {
 func (r *Rooms) writer(c *Client) {
 	defer c.conn.Close()
 	for msg := range c.send {
-		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil { return }
+		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+			return
+		}
 	}
 }
 
 func (r *Rooms) reader(c *Client, key string, rm *room) {
 	defer func() {
-		rm.mu.Lock(); delete(rm.members, c); rm.mu.Unlock()
+		rm.mu.Lock()
+		delete(rm.members, c)
+		rm.mu.Unlock()
 		close(c.send)
 		c.conn.Close()
 		// GC empty room
-		rm.mu.RLock(); empty := len(rm.members) == 0; rm.mu.RUnlock()
-		if empty { r.mu.Lock(); delete(r.by, key); r.mu.Unlock() }
+		rm.mu.RLock()
+		empty := len(rm.members) == 0
+		rm.mu.RUnlock()
+		if empty {
+			r.mu.Lock()
+			delete(r.by, key)
+			r.mu.Unlock()
+		}
 	}()
 	for {
 		_, raw, err := c.conn.ReadMessage()
-		if err != nil { return }
+		if err != nil {
+			return
+		}
 		// For group rooms, fan out client messages to peers.
 		var msg any
-		if json.Unmarshal(raw, &msg) != nil { continue }
+		if json.Unmarshal(raw, &msg) != nil {
+			continue
+		}
 		rm.mu.RLock()
 		for peer := range rm.members {
-			if peer == c { continue }
-			select { case peer.send <- raw: default: }
+			if peer == c {
+				continue
+			}
+			select {
+			case peer.send <- raw:
+			default:
+			}
 		}
 		rm.mu.RUnlock()
 	}

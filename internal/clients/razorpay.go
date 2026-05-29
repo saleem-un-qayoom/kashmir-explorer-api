@@ -35,21 +35,21 @@ func NewRazorpay(keyID, keySecret, webhookSecret string) *Razorpay {
 }
 
 type OrderRequest struct {
-	AmountPaise int               `json:"amount"`   // in smallest unit
-	Currency    string            `json:"currency"` // 'INR'
-	Receipt     string            `json:"receipt"`
-	Notes       map[string]string `json:"notes,omitempty"`
-	PaymentCapture bool           `json:"payment_capture"` // true = auto-capture
+	AmountPaise    int               `json:"amount"`   // in smallest unit
+	Currency       string            `json:"currency"` // 'INR'
+	Receipt        string            `json:"receipt"`
+	Notes          map[string]string `json:"notes,omitempty"`
+	PaymentCapture bool              `json:"payment_capture"` // true = auto-capture
 }
 
 type Order struct {
-	ID          string `json:"id"`
-	Entity      string `json:"entity"`
-	Amount      int    `json:"amount"`
-	Currency    string `json:"currency"`
-	Receipt     string `json:"receipt"`
-	Status      string `json:"status"`
-	CreatedAt   int64  `json:"created_at"`
+	ID        string `json:"id"`
+	Entity    string `json:"entity"`
+	Amount    int    `json:"amount"`
+	Currency  string `json:"currency"`
+	Receipt   string `json:"receipt"`
+	Status    string `json:"status"`
+	CreatedAt int64  `json:"created_at"`
 }
 
 // CreateOrder allocates a Razorpay order which the mobile SDK then opens.
@@ -90,7 +90,8 @@ func (r *Razorpay) VerifyWebhookSignature(rawBody []byte, signatureHex string) b
 
 // VerifyPaymentSignature — for client-side checkout success (razorpay_signature
 // header in the success callback). Hash format:
-//   HMAC_SHA256(orderID + "|" + paymentID, key_secret)
+//
+//	HMAC_SHA256(orderID + "|" + paymentID, key_secret)
 func (r *Razorpay) VerifyPaymentSignature(orderID, paymentID, signatureHex string) bool {
 	mac := hmac.New(sha256.New, []byte(r.KeySecret))
 	mac.Write([]byte(orderID + "|" + paymentID))
@@ -123,14 +124,18 @@ func (r *Razorpay) CreateSubscription(ctx context.Context, planID string, notes 
 	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(r.KeyID+":"+r.KeySecret)))
 
 	res, err := r.HTTP.Do(req)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		buf, _ := io.ReadAll(res.Body)
 		return "", fmt.Errorf("razorpay sub %d: %s", res.StatusCode, string(buf))
 	}
 	var out subscriptionResp
-	if err := json.NewDecoder(res.Body).Decode(&out); err != nil { return "", err }
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return "", err
+	}
 	return out.ID, nil
 }
 
@@ -144,7 +149,9 @@ func (r *Razorpay) CancelSubscription(ctx context.Context, subID string, cancelA
 	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(r.KeyID+":"+r.KeySecret)))
 
 	res, err := r.HTTP.Do(req)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		buf, _ := io.ReadAll(res.Body)

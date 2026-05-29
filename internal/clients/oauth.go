@@ -136,22 +136,34 @@ func (c *jwksCache) refresh(ctx context.Context) error {
 	}
 	req, _ := http.NewRequestWithContext(ctx, "GET", c.URL, nil)
 	res, err := c.client.Do(req)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer res.Body.Close()
-	var body struct { Keys []jwk `json:"keys"` }
+	var body struct {
+		Keys []jwk `json:"keys"`
+	}
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		return err
 	}
 	keys := map[string]*rsa.PublicKey{}
 	for _, k := range body.Keys {
-		if k.Kty != "RSA" { continue }
+		if k.Kty != "RSA" {
+			continue
+		}
 		nBytes, err := base64.RawURLEncoding.DecodeString(k.N)
-		if err != nil { continue }
+		if err != nil {
+			continue
+		}
 		eBytes, err := base64.RawURLEncoding.DecodeString(k.E)
-		if err != nil { continue }
+		if err != nil {
+			continue
+		}
 		n := new(big.Int).SetBytes(nBytes)
 		e := 0
-		for _, b := range eBytes { e = e<<8 + int(b) }
+		for _, b := range eBytes {
+			e = e<<8 + int(b)
+		}
 		keys[k.Kid] = &rsa.PublicKey{N: n, E: e}
 	}
 	c.keys = keys
@@ -162,25 +174,36 @@ func (c *jwksCache) refresh(ctx context.Context) error {
 func (c *jwksCache) keyFunc(ctx context.Context) jwt.Keyfunc {
 	return func(t *jwt.Token) (any, error) {
 		kid, _ := t.Header["kid"].(string)
-		if kid == "" { return nil, errors.New("token missing kid") }
-		if err := c.refresh(ctx); err != nil { return nil, err }
-		c.mu.Lock(); defer c.mu.Unlock()
+		if kid == "" {
+			return nil, errors.New("token missing kid")
+		}
+		if err := c.refresh(ctx); err != nil {
+			return nil, err
+		}
+		c.mu.Lock()
+		defer c.mu.Unlock()
 		key, ok := c.keys[kid]
 		if !ok {
 			// Force refresh and retry once.
 			c.fetch = time.Time{}
 			c.mu.Unlock()
-			if err := c.refresh(ctx); err != nil { c.mu.Lock(); return nil, err }
+			if err := c.refresh(ctx); err != nil {
+				c.mu.Lock()
+				return nil, err
+			}
 			c.mu.Lock()
 			key, ok = c.keys[kid]
-			if !ok { return nil, errors.New("unknown kid") }
+			if !ok {
+				return nil, errors.New("unknown kid")
+			}
 		}
 		return key, nil
 	}
 }
 
 func asString(v any) string {
-	s, _ := v.(string); return s
+	s, _ := v.(string)
+	return s
 }
 
 // SplitBearer is a tiny helper so handlers can do `auth := SplitBearer(r.Header)`.

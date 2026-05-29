@@ -28,14 +28,20 @@ func (s *Service) Food(w http.ResponseWriter, r *http.Request) {
 		FROM cultural_items WHERE type = 'dish'
 		ORDER BY name
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
 	for rows.Next() {
 		var id, name, urdu, ks, desc, where, price string
 		var veg bool
-		_ = rows.Scan(&id, &name, &urdu, &ks, &veg, &desc, &where, &price)
+		if err := rows.Scan(&id, &name, &urdu, &ks, &veg, &desc, &where, &price); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "name": name, "name_urdu": urdu, "name_kashmiri": ks,
 			"vegetarian": veg, "description": desc,
@@ -56,14 +62,20 @@ func (s *Service) Festivals(w http.ResponseWriter, r *http.Request) {
 		FROM cultural_items WHERE type = 'festival'
 		ORDER BY (details->>'month')::int NULLS LAST
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
 	for rows.Next() {
 		var id, name, dur, desc, region string
 		var month int
-		_ = rows.Scan(&id, &name, &month, &dur, &desc, &region)
+		if err := rows.Scan(&id, &name, &month, &dur, &desc, &region); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "name": name, "month": month,
 			"duration": dur, "description": desc, "region": region,
@@ -82,13 +94,19 @@ func (s *Service) Crafts(w http.ResponseWriter, r *http.Request) {
 		FROM cultural_items WHERE type = 'craft'
 		ORDER BY name
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
 	for rows.Next() {
 		var id, name, origin, price, desc string
-		_ = rows.Scan(&id, &name, &origin, &price, &desc)
+		if err := rows.Scan(&id, &name, &origin, &price, &desc); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "name": name, "origin": origin, "price": price, "description": desc,
 		})
@@ -103,13 +121,19 @@ func (s *Service) Etiquette(w http.ResponseWriter, r *http.Request) {
 		FROM cultural_items WHERE type = 'etiquette'
 		ORDER BY (details->>'category')
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
 	for rows.Next() {
 		var cat, title, body string
-		_ = rows.Scan(&cat, &title, &body)
+		if err := rows.Scan(&cat, &title, &body); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{"category": cat, "title": title, "body": body})
 	}
 	response.OK(w, out)
@@ -132,7 +156,8 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO cultural_items (type, name, description, details, name_local)
 		VALUES ($1, $2, $3, $4, $5)
 	`, body.Type, body.Name, body.Description, body.Details, body.NameLocal); err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.Created(w, map[string]bool{"created": true})
 }
@@ -155,7 +180,8 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		FROM cultural_items WHERE id = $1
 	`, id).Scan(&item.ID, &item.Type, &item.Name, &item.Description, &item.Details, &item.NameLocal)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, item)
 }
@@ -170,7 +196,8 @@ func (s *Service) AdminCreateFor(ctype string) http.HandlerFunc {
 			NameLocal   json.RawMessage `json:"name_local"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			response.BadRequest(w, "invalid body"); return
+			response.BadRequest(w, "invalid body")
+			return
 		}
 		var id string
 		err := s.pool.QueryRow(r.Context(), `
@@ -178,7 +205,8 @@ func (s *Service) AdminCreateFor(ctype string) http.HandlerFunc {
 			VALUES ($1, $2, $3, $4, $5) RETURNING id::text
 		`, ctype, body.Name, body.Description, body.Details, body.NameLocal).Scan(&id)
 		if err != nil {
-			response.Internal(w, err); return
+			response.Internal(w, err)
+			return
 		}
 		response.Created(w, map[string]string{"id": id})
 	}
@@ -193,14 +221,16 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 		NameLocal   json.RawMessage `json:"name_local"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	_, err := s.pool.Exec(r.Context(), `
 		UPDATE cultural_items SET name=$1, description=$2, details=$3, name_local=$4
 		WHERE id=$5
 	`, body.Name, body.Description, body.Details, body.NameLocal, id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, map[string]string{"updated": id})
 }
@@ -209,7 +239,8 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM cultural_items WHERE id = $1`, id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.NoContent(w)
 }

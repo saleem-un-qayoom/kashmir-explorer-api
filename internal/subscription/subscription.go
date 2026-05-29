@@ -1,8 +1,8 @@
 // Package subscription — premium plans via Razorpay Subscriptions.
 //
-//   POST /v1/me/subscribe    · create Razorpay subscription, return checkout URL
-//   POST /v1/me/cancel-sub   · request cancellation (Razorpay-side)
-//   GET  /v1/me/subscription · current state
+//	POST /v1/me/subscribe    · create Razorpay subscription, return checkout URL
+//	POST /v1/me/cancel-sub   · request cancellation (Razorpay-side)
+//	GET  /v1/me/subscription · current state
 //
 // Webhook events are dispatched here from booking.RazorpayWebhook.
 package subscription
@@ -45,16 +45,23 @@ func (s *Service) Subscribe(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body subscribeReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "plan required"); return
+		response.BadRequest(w, "plan required")
+		return
 	}
 
 	planID, err := s.razorpayPlanID(body.Plan)
-	if err != nil { response.BadRequest(w, err.Error()); return }
+	if err != nil {
+		response.BadRequest(w, err.Error())
+		return
+	}
 
 	subID, err := s.rp.CreateSubscription(r.Context(), planID, map[string]string{
 		"user_id": userID,
 	})
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	if _, err := s.pool.Exec(r.Context(), `
 		INSERT INTO subscriptions (user_id, plan, status, razorpay_subscription_id)
@@ -62,7 +69,8 @@ func (s *Service) Subscribe(w http.ResponseWriter, r *http.Request) {
 		ON CONFLICT (user_id) DO UPDATE
 		  SET plan = $2, status = 'pending', razorpay_subscription_id = $3, cancelled_at = NULL
 	`, userID, body.Plan, subID); err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 
 	response.Created(w, map[string]any{
@@ -100,10 +108,12 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 	if err := s.pool.QueryRow(r.Context(),
 		`SELECT razorpay_subscription_id FROM subscriptions WHERE user_id = $1`,
 		userID).Scan(&rpID); err != nil {
-		response.NotFound(w, "no active subscription"); return
+		response.NotFound(w, "no active subscription")
+		return
 	}
 	if err := s.rp.CancelSubscription(r.Context(), rpID, true); err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	_, _ = s.pool.Exec(r.Context(),
 		`UPDATE subscriptions SET cancelled_at = now() WHERE user_id = $1`, userID)
@@ -113,7 +123,9 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 func (s *Service) razorpayPlanID(plan string) (string, error) {
 	switch plan {
 	case "monthly":
-		if s.cfg.KeyID == "" { return "", errors.New("razorpay not configured") }
+		if s.cfg.KeyID == "" {
+			return "", errors.New("razorpay not configured")
+		}
 		return "plan_kashmir_monthly_199_inr", nil
 	case "yearly":
 		return "plan_kashmir_yearly_999_inr", nil
@@ -136,9 +148,13 @@ func (s *Service) HandleEvent(ctx context.Context, event string, payload json.Ra
 		} `json:"subscription"`
 	}
 	var ev evtBody
-	if json.Unmarshal(payload, &ev) != nil { return }
+	if json.Unmarshal(payload, &ev) != nil {
+		return
+	}
 	sid := ev.Subscription.Entity.ID
-	if sid == "" { return }
+	if sid == "" {
+		return
+	}
 
 	periodEnd := time.Unix(ev.Subscription.Entity.CurrentEnd, 0)
 	switch event {

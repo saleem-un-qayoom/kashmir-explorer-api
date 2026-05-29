@@ -64,16 +64,21 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Hub) Count() int {
-	h.mu.RLock(); defer h.mu.RUnlock()
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	return len(h.clients)
 }
 
 // Broadcast a JSON-serialisable payload to every connected client.
 func (h *Hub) Broadcast(payload any) {
 	msg, err := json.Marshal(payload)
-	if err != nil { slog.Error("ws marshal", slog.Any("err", err)); return }
+	if err != nil {
+		slog.Error("ws marshal", slog.Any("err", err))
+		return
+	}
 
-	h.mu.RLock(); defer h.mu.RUnlock()
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	for c := range h.clients {
 		select {
 		case c.send <- msg:
@@ -86,7 +91,8 @@ func (h *Hub) Broadcast(payload any) {
 }
 
 func (h *Hub) remove(c *Client) {
-	h.mu.Lock(); defer h.mu.Unlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	if _, ok := h.clients[c]; ok {
 		delete(h.clients, c)
 		close(c.send)
@@ -104,7 +110,9 @@ func (c *Client) reader() {
 	for {
 		// We don't expect messages from the client (advisories is one-way).
 		// But we read to detect closes.
-		if _, _, err := c.conn.NextReader(); err != nil { return }
+		if _, _, err := c.conn.NextReader(); err != nil {
+			return
+		}
 	}
 }
 
@@ -120,10 +128,14 @@ func (c *Client) writer() {
 				_ = c.conn.WriteMessage(websocket.CloseMessage, nil)
 				return
 			}
-			if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil { return }
+			if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+				return
+			}
 		case <-ping.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil { return }
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
@@ -132,7 +144,9 @@ func (c *Client) writer() {
 
 func (h *Hub) BroadcastWithCtx(ctx context.Context, payload any) {
 	select {
-	case <-ctx.Done(): return
-	default: h.Broadcast(payload)
+	case <-ctx.Done():
+		return
+	default:
+		h.Broadcast(payload)
 	}
 }

@@ -16,27 +16,27 @@ type Service struct{ pool *pgxpool.Pool }
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 type Trek struct {
-	ID            string   `json:"id"`
-	Slug          string   `json:"slug"`
-	Name          string   `json:"name"`
-	Difficulty    *string  `json:"difficulty,omitempty"`
-	TrekType      *string  `json:"trek_type,omitempty"`
-	DurationDays  *int     `json:"duration_days,omitempty"`
-	DistanceKm    *float64 `json:"distance_km,omitempty"`
-	MaxAltitudeM  *int     `json:"max_altitude_m,omitempty"`
-	StartPoint    *string  `json:"start_point,omitempty"`
-	EndPoint      *string  `json:"end_point,omitempty"`
-	BestMonths    []int    `json:"best_months,omitempty"`
-	Permits       []string `json:"permits,omitempty"`
-	AmsRisk       bool     `json:"ams_risk"`
-	Status        *string  `json:"status,omitempty"`
-	ClosureReason *string `json:"closure_reason,omitempty"`
-	Tagline       *string `json:"tagline,omitempty"`
-	Uniqueness    *string `json:"uniqueness,omitempty"`
-	Rating        float64 `json:"rating"`
-	ReviewCount   int     `json:"review_count"`
-	GuideAvailable bool   `json:"guide_available"`
-	GuidePriceINR *int    `json:"guide_price_inr,omitempty"`
+	ID             string   `json:"id"`
+	Slug           string   `json:"slug"`
+	Name           string   `json:"name"`
+	Difficulty     *string  `json:"difficulty,omitempty"`
+	TrekType       *string  `json:"trek_type,omitempty"`
+	DurationDays   *int     `json:"duration_days,omitempty"`
+	DistanceKm     *float64 `json:"distance_km,omitempty"`
+	MaxAltitudeM   *int     `json:"max_altitude_m,omitempty"`
+	StartPoint     *string  `json:"start_point,omitempty"`
+	EndPoint       *string  `json:"end_point,omitempty"`
+	BestMonths     []int    `json:"best_months,omitempty"`
+	Permits        []string `json:"permits,omitempty"`
+	AmsRisk        bool     `json:"ams_risk"`
+	Status         *string  `json:"status,omitempty"`
+	ClosureReason  *string  `json:"closure_reason,omitempty"`
+	Tagline        *string  `json:"tagline,omitempty"`
+	Uniqueness     *string  `json:"uniqueness,omitempty"`
+	Rating         float64  `json:"rating"`
+	ReviewCount    int      `json:"review_count"`
+	GuideAvailable bool     `json:"guide_available"`
+	GuidePriceINR  *int     `json:"guide_price_inr,omitempty"`
 	// AllTrails-style discovery (migration 0009)
 	Features       []string `json:"features,omitempty"`
 	Activities     []string `json:"activities,omitempty"`
@@ -127,35 +127,35 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	// Flatten the response — the mobile `TrekDetail` type expects every
 	// scalar trek field at the root level alongside the JSONB extras.
 	flat := map[string]any{
-		"id":                     t.ID,
-		"slug":                   t.Slug,
-		"name":                   t.Name,
-		"difficulty":             t.Difficulty,
-		"trek_type":              t.TrekType,
-		"duration_days":          t.DurationDays,
-		"distance_km":            t.DistanceKm,
-		"max_altitude_m":         t.MaxAltitudeM,
-		"start_point":            t.StartPoint,
-		"end_point":              t.EndPoint,
-		"best_months":            t.BestMonths,
-		"permits":                t.Permits,
-		"ams_risk":               t.AmsRisk,
-		"status":                 t.Status,
-		"closure_reason":         t.ClosureReason,
-		"tagline":                t.Tagline,
-		"uniqueness":             t.Uniqueness,
-		"rating":                 t.Rating,
-		"review_count":           t.ReviewCount,
-		"guide_available":        t.GuideAvailable,
-		"guide_price_inr":        t.GuidePriceINR,
-		"features":               t.Features,
-		"activities":             t.Activities,
-		"elevation_gain_m":       t.ElevationGainM,
-		"route_type":             t.RouteType,
-		"hero_image_url":         t.HeroImageURL,
-		"waypoints":              waypoints,
-		"gear_list":              gearList,
-		"trail_sections":         sections,
+		"id":               t.ID,
+		"slug":             t.Slug,
+		"name":             t.Name,
+		"difficulty":       t.Difficulty,
+		"trek_type":        t.TrekType,
+		"duration_days":    t.DurationDays,
+		"distance_km":      t.DistanceKm,
+		"max_altitude_m":   t.MaxAltitudeM,
+		"start_point":      t.StartPoint,
+		"end_point":        t.EndPoint,
+		"best_months":      t.BestMonths,
+		"permits":          t.Permits,
+		"ams_risk":         t.AmsRisk,
+		"status":           t.Status,
+		"closure_reason":   t.ClosureReason,
+		"tagline":          t.Tagline,
+		"uniqueness":       t.Uniqueness,
+		"rating":           t.Rating,
+		"review_count":     t.ReviewCount,
+		"guide_available":  t.GuideAvailable,
+		"guide_price_inr":  t.GuidePriceINR,
+		"features":         t.Features,
+		"activities":       t.Activities,
+		"elevation_gain_m": t.ElevationGainM,
+		"route_type":       t.RouteType,
+		"hero_image_url":   t.HeroImageURL,
+		"waypoints":        waypoints,
+		"gear_list":        gearList,
+		"trail_sections":   sections,
 	}
 	response.OK(w, flat)
 }
@@ -185,7 +185,7 @@ func (s *Service) Path(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]any{
 		"polyline":         json.RawMessage(polyJSON),
 		"waypoints":        json.RawMessage(waypointsJSON),
-		"phases":           json.RawMessage(phasesJSON),  // per-day color-coded segments
+		"phases":           json.RawMessage(phasesJSON), // per-day color-coded segments
 		"total_distance_m": int(distKm * 1000),
 		"version":          "2",
 	})
@@ -194,48 +194,50 @@ func (s *Service) Path(w http.ResponseWriter, r *http.Request) {
 // ─── Admin ────────────────────────────────────────────────────
 
 type AdminTrek struct {
-	ID              string          `json:"id"`
-	Slug            string          `json:"slug"`
-	Name            string          `json:"name"`
-	Difficulty      string          `json:"difficulty"`
-	TrekType        string          `json:"trek_type"`
-	DurationDays    int             `json:"duration_days"`
-	DistanceKm      *float64        `json:"distance_km"`
-	MaxAltitudeM    *int            `json:"max_altitude_m"`
-	StartPoint      *string         `json:"start_point"`
-	EndPoint        *string         `json:"end_point"`
-	BestMonths      []int           `json:"best_months"`
-	Permits         []string        `json:"permits"`
-	AmsRisk         bool            `json:"ams_risk"`
-	Status          string          `json:"status"`
-	ClosureReason   *string         `json:"closure_reason"`
-	Tagline         *string         `json:"tagline"`
-	Uniqueness      *string         `json:"uniqueness"`
-	Rating          float64         `json:"rating"`
-	ReviewCount     int             `json:"review_count"`
-	GuideAvailable  bool            `json:"guide_available"`
-	GuidePriceINR   *int            `json:"guide_price_inr"`
-	Waypoints       json.RawMessage `json:"waypoints"`
-	GearList        json.RawMessage `json:"gear_list"`
-	PathGeoJSON     json.RawMessage `json:"path_geojson"`
-	PathPhases      json.RawMessage `json:"path_phases"`  // [{day, coordinates: [[lng,lat],…]}]
-	WaypointCoords  json.RawMessage `json:"waypoint_coords"`
-	TrailSections   json.RawMessage `json:"trail_sections"`
-	IsPublished     bool            `json:"is_published"`
+	ID             string          `json:"id"`
+	Slug           string          `json:"slug"`
+	Name           string          `json:"name"`
+	Difficulty     string          `json:"difficulty"`
+	TrekType       string          `json:"trek_type"`
+	DurationDays   int             `json:"duration_days"`
+	DistanceKm     *float64        `json:"distance_km"`
+	MaxAltitudeM   *int            `json:"max_altitude_m"`
+	StartPoint     *string         `json:"start_point"`
+	EndPoint       *string         `json:"end_point"`
+	BestMonths     []int           `json:"best_months"`
+	Permits        []string        `json:"permits"`
+	AmsRisk        bool            `json:"ams_risk"`
+	Status         string          `json:"status"`
+	ClosureReason  *string         `json:"closure_reason"`
+	Tagline        *string         `json:"tagline"`
+	Uniqueness     *string         `json:"uniqueness"`
+	Rating         float64         `json:"rating"`
+	ReviewCount    int             `json:"review_count"`
+	GuideAvailable bool            `json:"guide_available"`
+	GuidePriceINR  *int            `json:"guide_price_inr"`
+	Waypoints      json.RawMessage `json:"waypoints"`
+	GearList       json.RawMessage `json:"gear_list"`
+	PathGeoJSON    json.RawMessage `json:"path_geojson"`
+	PathPhases     json.RawMessage `json:"path_phases"` // [{day, coordinates: [[lng,lat],…]}]
+	WaypointCoords json.RawMessage `json:"waypoint_coords"`
+	TrailSections  json.RawMessage `json:"trail_sections"`
+	IsPublished    bool            `json:"is_published"`
 	// AllTrails-style discovery (migration 0009)
-	Features        []string `json:"features"`
-	Activities      []string `json:"activities"`
-	ElevationGainM  *int     `json:"elevation_gain_m"`
-	RouteType       *string  `json:"route_type"`
+	Features       []string `json:"features"`
+	Activities     []string `json:"activities"`
+	ElevationGainM *int     `json:"elevation_gain_m"`
+	RouteType      *string  `json:"route_type"`
 }
 
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var in AdminTrek
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	if in.Name == "" || in.Slug == "" {
-		response.BadRequest(w, "name and slug required"); return
+		response.BadRequest(w, "name and slug required")
+		return
 	}
 
 	var id string
@@ -258,7 +260,8 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		in.Features, in.Activities, in.ElevationGainM, in.RouteType, in.PathPhases,
 	).Scan(&id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.Created(w, map[string]string{"id": id})
 }
@@ -267,7 +270,8 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in AdminTrek
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 
 	_, err := s.pool.Exec(r.Context(), `
@@ -290,7 +294,8 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 		in.Features, in.Activities, in.ElevationGainM, in.RouteType, in.PathPhases,
 	)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, map[string]string{"updated": id})
 }
@@ -320,7 +325,8 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		&t.Features, &t.Activities, &t.ElevationGainM, &t.RouteType, &t.PathPhases,
 	)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, t)
 }
@@ -334,18 +340,24 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		       rating, review_count, guide_available, guide_price_inr, is_published
 		FROM treks ORDER BY name
 	`)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := make([]AdminTrek, 0)
 	for rows.Next() {
 		var t AdminTrek
-		_ = rows.Scan(
+		if err := rows.Scan(
 			&t.ID, &t.Slug, &t.Name, &t.Difficulty, &t.TrekType, &t.DurationDays, &t.DistanceKm,
 			&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits,
 			&t.AmsRisk, &t.Status, &t.ClosureReason, &t.Tagline, &t.Uniqueness,
 			&t.Rating, &t.ReviewCount, &t.GuideAvailable, &t.GuidePriceINR, &t.IsPublished,
-		)
+		); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, t)
 	}
 	response.OK(w, out)
@@ -355,7 +367,8 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM treks WHERE id = $1`, id)
 	if err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.NoContent(w)
 }

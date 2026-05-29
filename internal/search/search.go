@@ -28,7 +28,7 @@ func NewService(pool *pgxpool.Pool, embKey string) *Service {
 }
 
 type Result struct {
-	Kind       string  `json:"kind"`       // 'destination' | 'trek'
+	Kind       string  `json:"kind"` // 'destination' | 'trek'
 	ID         string  `json:"id"`
 	Slug       string  `json:"slug"`
 	Name       string  `json:"name"`
@@ -49,7 +49,9 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, _ := strconv.Atoi(q.Get("limit"))
-	if limit <= 0 || limit > 50 { limit = 20 }
+	if limit <= 0 || limit > 50 {
+		limit = 20
+	}
 
 	maxAlt, _ := strconv.Atoi(q.Get("max_alt"))
 	region := q.Get("region")
@@ -94,7 +96,10 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 			ORDER BY score DESC
 			LIMIT $6
 		`, vector, query, region, maxAlt, permitOk, limit)
-		if err != nil { response.Internal(w, err); return }
+		if err != nil {
+			response.Internal(w, err)
+			return
+		}
 		defer rows.Close()
 		for rows.Next() {
 			var item Result
@@ -113,12 +118,18 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 			ORDER BY score DESC
 			LIMIT $2
 		`, query, limit)
-		if err != nil { response.Internal(w, err); return }
+		if err != nil {
+			response.Internal(w, err)
+			return
+		}
 		defer rows.Close()
 		for rows.Next() {
 			var item Result
-			_ = rows.Scan(&item.Kind, &item.ID, &item.Slug, &item.Name, &item.Tagline,
-				&item.District, &item.AltitudeM, &item.Score)
+			if err := rows.Scan(&item.Kind, &item.ID, &item.Slug, &item.Name, &item.Tagline,
+				&item.District, &item.AltitudeM, &item.Score); err != nil {
+				response.Internal(w, err)
+				return
+			}
 			results = append(results, item)
 		}
 	}
@@ -140,7 +151,10 @@ func (s *Service) Reindex(w http.ResponseWriter, r *http.Request) {
 		FROM destinations WHERE is_published = true AND embedding IS NULL
 		LIMIT 50
 	`)
-	if err != nil { response.Internal(w, fmt.Errorf("dest index: %w", err)); return }
+	if err != nil {
+		response.Internal(w, fmt.Errorf("dest index: %w", err))
+		return
+	}
 
 	treks, err := s.indexBatch(r.Context(), "treks", `
 		SELECT id::text, name || ' · ' || difficulty || ' · ' ||
@@ -149,7 +163,10 @@ func (s *Service) Reindex(w http.ResponseWriter, r *http.Request) {
 		FROM treks WHERE is_published = true AND embedding IS NULL
 		LIMIT 50
 	`)
-	if err != nil { response.Internal(w, fmt.Errorf("trek index: %w", err)); return }
+	if err != nil {
+		response.Internal(w, fmt.Errorf("trek index: %w", err))
+		return
+	}
 
 	response.OK(w, map[string]any{
 		"destinations_indexed": dests,
@@ -160,21 +177,31 @@ func (s *Service) Reindex(w http.ResponseWriter, r *http.Request) {
 func (s *Service) indexBatch(ctx context.Context, table, query string) (int, error) {
 	type row struct{ id, text string }
 	rows, err := s.pool.Query(ctx, query)
-	if err != nil { return 0, err }
+	if err != nil {
+		return 0, err
+	}
 	defer rows.Close()
 
 	var batch []row
 	for rows.Next() {
 		var item row
-		if err := rows.Scan(&item.id, &item.text); err != nil { return 0, err }
+		if err := rows.Scan(&item.id, &item.text); err != nil {
+			return 0, err
+		}
 		batch = append(batch, item)
 	}
-	if len(batch) == 0 { return 0, nil }
+	if len(batch) == 0 {
+		return 0, nil
+	}
 
 	texts := make([]string, len(batch))
-	for i, item := range batch { texts[i] = item.text }
+	for i, item := range batch {
+		texts[i] = item.text
+	}
 	vecs, err := s.emb.EmbedDocs(ctx, texts)
-	if err != nil { return 0, err }
+	if err != nil {
+		return 0, err
+	}
 
 	for i, item := range batch {
 		_, _ = s.pool.Exec(ctx,

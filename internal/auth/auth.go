@@ -43,7 +43,9 @@ func NewService(pool *pgxpool.Pool, jwt config.JWTConfig, otp config.OTPConfig, 
 
 // ─── Phone OTP ────────────────────────────────────────────────────
 
-type phoneStartReq struct{ Phone string `json:"phone"` }
+type phoneStartReq struct {
+	Phone string `json:"phone"`
+}
 
 func (s *Service) PhoneStart(w http.ResponseWriter, r *http.Request) {
 	var body phoneStartReq
@@ -96,9 +98,18 @@ func (s *Service) PhoneVerify(w http.ResponseWriter, r *http.Request) {
 		err := s.pool.QueryRow(r.Context(),
 			`SELECT code_hash, expires_at, attempts FROM otp_codes WHERE phone=$1`, phone,
 		).Scan(&hash, &expires, &attempts)
-		if err != nil { response.Unauthorized(w, "no OTP requested"); return }
-		if attempts >= 5 { response.Unauthorized(w, "too many attempts"); return }
-		if time.Now().After(expires) { response.Unauthorized(w, "OTP expired"); return }
+		if err != nil {
+			response.Unauthorized(w, "no OTP requested")
+			return
+		}
+		if attempts >= 5 {
+			response.Unauthorized(w, "too many attempts")
+			return
+		}
+		if time.Now().After(expires) {
+			response.Unauthorized(w, "OTP expired")
+			return
+		}
 		if hashOTP(body.Code) != hash {
 			_, _ = s.pool.Exec(r.Context(), `UPDATE otp_codes SET attempts = attempts + 1 WHERE phone=$1`, phone)
 			response.Unauthorized(w, "incorrect code")
@@ -107,17 +118,25 @@ func (s *Service) PhoneVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid, role, err := s.upsertUserByPhone(r.Context(), phone)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	_, _ = s.pool.Exec(r.Context(), `DELETE FROM otp_codes WHERE phone=$1`, phone)
 
 	access, refresh, err := s.issuer.Issue(uid, role)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	response.OK(w, tokenEnvelope(uid, role, access, refresh))
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────
 
-type oauthReq struct{ IDToken string `json:"id_token"` }
+type oauthReq struct {
+	IDToken string `json:"id_token"`
+}
 
 func (s *Service) Google(w http.ResponseWriter, r *http.Request) {
 	var body oauthReq
@@ -126,7 +145,10 @@ func (s *Service) Google(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	claims, err := s.google.Verify(r.Context(), body.IDToken)
-	if err != nil { response.Unauthorized(w, "Google verification failed: "+err.Error()); return }
+	if err != nil {
+		response.Unauthorized(w, "Google verification failed: "+err.Error())
+		return
+	}
 	s.upsertAndIssue(w, r, claims)
 }
 
@@ -137,21 +159,32 @@ func (s *Service) Apple(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	claims, err := s.apple.Verify(r.Context(), body.IDToken)
-	if err != nil { response.Unauthorized(w, "Apple verification failed: "+err.Error()); return }
+	if err != nil {
+		response.Unauthorized(w, "Apple verification failed: "+err.Error())
+		return
+	}
 	s.upsertAndIssue(w, r, claims)
 }
 
 func (s *Service) upsertAndIssue(w http.ResponseWriter, r *http.Request, c *clients.OAuthClaims) {
 	uid, role, err := s.upsertUserByOAuth(r.Context(), c)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	access, refresh, err := s.issuer.Issue(uid, role)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	response.OK(w, tokenEnvelope(uid, role, access, refresh))
 }
 
 // ─── Refresh ────────────────────────────────────────────────────
 
-type refreshReq struct{ RefreshToken string `json:"refresh_token"` }
+type refreshReq struct {
+	RefreshToken string `json:"refresh_token"`
+}
 
 func (s *Service) Refresh(w http.ResponseWriter, r *http.Request) {
 	var body refreshReq
@@ -160,9 +193,15 @@ func (s *Service) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	claims, err := s.issuer.Verify(body.RefreshToken)
-	if err != nil { response.Unauthorized(w, "invalid refresh token"); return }
+	if err != nil {
+		response.Unauthorized(w, "invalid refresh token")
+		return
+	}
 	access, refresh, err := s.issuer.Issue(claims.UserID, claims.Role)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	response.OK(w, tokenEnvelope(claims.UserID, claims.Role, access, refresh))
 }
 
@@ -207,7 +246,9 @@ func tokenEnvelope(uid, role, access, refresh string) map[string]any {
 func normalisePhone(s string) string {
 	s = strings.ReplaceAll(s, " ", "")
 	s = strings.ReplaceAll(s, "-", "")
-	if !strings.HasPrefix(s, "+") { s = "+91" + s }
+	if !strings.HasPrefix(s, "+") {
+		s = "+91" + s
+	}
 	return s
 }
 

@@ -76,13 +76,7 @@ VALUES
    '{"jio":"good","airtel":"good","bsnl":"patchy"}', '{"atm":false,"fuelKm":5,"toilet":"basic","drone":false}',
    ARRAY['wildlife'], true, false),
 
-  ('Aru Valley', 'آرو وادی', 'aru-valley',
-   (SELECT id FROM regions WHERE slug='south'), 'Anantnag',
-   '11 km north of Pahalgam — quieter meadow + trailhead for major treks.',
-   'Where serious trekkers leave the road. Trailhead for Kolahoi and Tarsar-Marsar.',
-   ST_GeogFromText('POINT(75.2625 34.0958)'), 2408, ARRAY[5,6,7,8,9,10], 'summer', 4.7, 521, 106, 0,
-   '{"jio":"patchy","airtel":"patchy","bsnl":"none"}', '{"atm":false,"fuelKm":11,"toilet":"basic","drone":false}',
-   ARRAY[]::TEXT[], true, false),
+  -- NOTE: aru-valley is seeded in 0002_seed.sql; not duplicated here.
 
   ('Betaab Valley', NULL, 'betaab-valley',
    (SELECT id FROM regions WHERE slug='south'), 'Anantnag',
@@ -304,7 +298,6 @@ SELECT d.id, c.id FROM destinations d, categories c WHERE
   (d.slug = 'hari-parbat' AND c.slug IN ('spiritual','cultural','hidden-gems')) OR
   (d.slug = 'dachigam-national-park' AND c.slug IN ('nature','hidden-gems')) OR
   (d.slug = 'hokersar-wetland' AND c.slug IN ('nature','hidden-gems')) OR
-  (d.slug = 'aru-valley' AND c.slug IN ('nature','adventure')) OR
   (d.slug = 'betaab-valley' AND c.slug IN ('popular','nature')) OR
   (d.slug = 'chandanwari' AND c.slug IN ('spiritual','adventure')) OR
   (d.slug = 'amarnath-cave' AND c.slug IN ('spiritual','adventure')) OR
@@ -454,7 +447,7 @@ DELETE FROM treks WHERE slug IN (
 DELETE FROM destination_categories WHERE destination_id IN (
   SELECT id FROM destinations WHERE slug IN (
     'nigeen-lake','mughal-gardens','shankaracharya-temple','pari-mahal','jamia-masjid-srinagar',
-    'hari-parbat','dachigam-national-park','hokersar-wetland','aru-valley','betaab-valley',
+    'hari-parbat','dachigam-national-park','hokersar-wetland','betaab-valley',
     'chandanwari','amarnath-cave','martand-sun-temple','achabal-garden','verinag','daksum',
     'sinthan-top','aharbal-waterfall','tulian-lake','thajiwas-glacier','naranag','manasbal-lake',
     'kheer-bhawani','yusmarg','doodhpathri','tosamaidan','charar-e-sharief','wular-lake',

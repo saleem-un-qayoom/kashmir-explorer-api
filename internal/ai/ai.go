@@ -1,8 +1,9 @@
 // Package ai — Anthropic Claude proxy with destination RAG.
 //
 // Two endpoints:
-//   POST /v1/ai/plan-trip — single-shot itinerary JSON
-//   POST /v1/ai/ask       — streaming SSE chat response with citations
+//
+//	POST /v1/ai/plan-trip — single-shot itinerary JSON
+//	POST /v1/ai/ask       — streaming SSE chat response with citations
 package ai
 
 import (
@@ -54,14 +55,18 @@ type planTripReq struct {
 func (s *Service) PlanTrip(w http.ResponseWriter, r *http.Request) {
 	var body planTripReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
 	defer cancel()
 
 	dests, err := s.candidateDestinations(ctx, body)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	user := fmt.Sprintf(`Plan a %d-day trip to Kashmir for month %d.
 Based from: %s. Budget: %s. Max altitude: %dm.
@@ -92,7 +97,10 @@ Use ONLY slugs from the candidate list above. JSON only, no preamble.`,
 	text, err := s.llm.Complete(ctx, systemPrompt, []clients.Message{
 		{Role: "user", Content: user},
 	}, 2000)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	text = strings.TrimSpace(text)
 	text = strings.TrimPrefix(text, "```json")
@@ -117,17 +125,20 @@ type askReq struct {
 // POST /v1/ai/ask — server-sent events with token-by-token forwarding.
 //
 // Event types:
-//   event: chunk    \n data: {"text":"..."}         — content delta
-//   event: citation \n data: {"label":"...","slug":"..."}  — when a known place name is detected
-//   event: done     \n data: {}                       — clean close
-//   event: error    \n data: {"message":"..."}        — failure
+//
+//	event: chunk    \n data: {"text":"..."}         — content delta
+//	event: citation \n data: {"label":"...","slug":"..."}  — when a known place name is detected
+//	event: done     \n data: {}                       — clean close
+//	event: error    \n data: {"message":"..."}        — failure
 func (s *Service) Ask(w http.ResponseWriter, r *http.Request) {
 	var body askReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	if body.Question == "" {
-		response.BadRequest(w, "question required"); return
+		response.BadRequest(w, "question required")
+		return
 	}
 
 	flusher, ok := w.(http.Flusher)
@@ -136,10 +147,10 @@ func (s *Service) Ask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type",     "text/event-stream")
-	w.Header().Set("Cache-Control",    "no-cache")
-	w.Header().Set("Connection",       "keep-alive")
-	w.Header().Set("X-Accel-Buffering","no") // prevent nginx buffering
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no") // prevent nginx buffering
 
 	ctx, cancel := context.WithTimeout(r.Context(), 120*time.Second)
 	defer cancel()
@@ -223,16 +234,22 @@ func (s *Service) candidateDestinations(ctx context.Context, req planTripReq) (s
 		ORDER BY is_featured DESC, rating DESC
 		LIMIT 30
 	`, req.MaxAltM, req.PermitOk)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer rows.Close()
 	var sb strings.Builder
 	for rows.Next() {
 		var slug, name, district, tagline string
 		var alt int
 		var permits []string
-		_ = rows.Scan(&slug, &name, &district, &alt, &tagline, &permits)
+		if err := rows.Scan(&slug, &name, &district, &alt, &tagline, &permits); err != nil {
+			return "", err
+		}
 		permitStr := ""
-		if len(permits) > 0 { permitStr = " [permit: " + strings.Join(permits, ",") + "]" }
+		if len(permits) > 0 {
+			permitStr = " [permit: " + strings.Join(permits, ",") + "]"
+		}
 		fmt.Fprintf(&sb, "- %s (%s) · %s · %dm%s — %s\n", slug, name, district, alt, permitStr, tagline)
 	}
 	return sb.String(), nil
@@ -246,7 +263,9 @@ func (s *Service) singleDestinationContext(ctx context.Context, id string) (stri
 		       COALESCE(tagline, ''), COALESCE(uniqueness, '')
 		FROM destinations WHERE id = $1
 	`, id).Scan(&name, &district, &alt, &tagline, &uniqueness)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("%s · %s · %dm\nTagline: %s\nWhy unique: %s\n", name, district, alt, tagline, uniqueness), nil
 }
 
@@ -254,12 +273,16 @@ func (s *Service) topDestinationsContext(ctx context.Context, n int) (string, er
 	rows, err := s.pool.Query(ctx,
 		`SELECT slug, name, COALESCE(tagline, '') FROM destinations
 		 WHERE is_published = true ORDER BY rating DESC LIMIT $1`, n)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer rows.Close()
 	var sb strings.Builder
 	for rows.Next() {
 		var slug, name, tag string
-		_ = rows.Scan(&slug, &name, &tag)
+		if err := rows.Scan(&slug, &name, &tag); err != nil {
+			return "", err
+		}
 		fmt.Fprintf(&sb, "- %s (%s) — %s\n", slug, name, tag)
 	}
 	return sb.String(), nil
@@ -268,12 +291,16 @@ func (s *Service) topDestinationsContext(ctx context.Context, n int) (string, er
 func (s *Service) allDestinationNames(ctx context.Context) (map[string]string, error) {
 	rows, err := s.pool.Query(ctx,
 		`SELECT slug, name FROM destinations WHERE is_published = true`)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	out := map[string]string{}
 	for rows.Next() {
 		var slug, name string
-		_ = rows.Scan(&slug, &name)
+		if err := rows.Scan(&slug, &name); err != nil {
+			return nil, err
+		}
 		out[name] = slug
 	}
 	return out, nil
@@ -291,12 +318,16 @@ type identifyReq struct {
 func (s *Service) IdentifyPlace(w http.ResponseWriter, r *http.Request) {
 	var body identifyReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	if body.ImageBase64 == "" {
-		response.BadRequest(w, "image_base64 required"); return
+		response.BadRequest(w, "image_base64 required")
+		return
 	}
-	if body.MediaType == "" { body.MediaType = "image/jpeg" }
+	if body.MediaType == "" {
+		body.MediaType = "image/jpeg"
+	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -311,7 +342,10 @@ Reply in JSON: {"is_kashmir": true|false, "best_guess_slug": "slug-or-null", "al
 		corpus)
 
 	text, err := s.llm.CompleteWithImage(ctx, systemPrompt, prompt, body.ImageBase64, body.MediaType, 600)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	text = strings.TrimSpace(text)
 	text = strings.TrimPrefix(text, "```json")

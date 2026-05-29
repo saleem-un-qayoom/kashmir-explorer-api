@@ -35,7 +35,7 @@ func NewAnthropic(apiKey, model string) *Anthropic {
 }
 
 type Message struct {
-	Role    string `json:"role"`    // 'user' | 'assistant'
+	Role    string `json:"role"` // 'user' | 'assistant'
 	Content string `json:"content"`
 }
 
@@ -102,9 +102,9 @@ func (a *Anthropic) Complete(ctx context.Context, system string, messages []Mess
 /* ─── Vision (image input) ──────────────────────────────── */
 
 type contentBlock struct {
-	Type   string         `json:"type"`
-	Text   string         `json:"text,omitempty"`
-	Source *imageSource   `json:"source,omitempty"`
+	Type   string       `json:"type"`
+	Text   string       `json:"text,omitempty"`
+	Source *imageSource `json:"source,omitempty"`
 }
 type imageSource struct {
 	Type      string `json:"type"`       // 'base64'
@@ -113,10 +113,10 @@ type imageSource struct {
 }
 
 type visionReq struct {
-	Model     string `json:"model"`
-	System    string `json:"system,omitempty"`
+	Model     string          `json:"model"`
+	System    string          `json:"system,omitempty"`
 	Messages  []visionMessage `json:"messages"`
-	MaxTokens int    `json:"max_tokens"`
+	MaxTokens int             `json:"max_tokens"`
 }
 type visionMessage struct {
 	Role    string         `json:"role"`
@@ -126,7 +126,9 @@ type visionMessage struct {
 // CompleteWithImage — single-turn vision request. base64Image must be the
 // raw base64 string (no data: URL prefix).
 func (a *Anthropic) CompleteWithImage(ctx context.Context, system, prompt, base64Image, mediaType string, maxTokens int) (string, error) {
-	if a.APIKey == "" { return "", errors.New("ANTHROPIC_API_KEY not set") }
+	if a.APIKey == "" {
+		return "", errors.New("ANTHROPIC_API_KEY not set")
+	}
 	body, _ := json.Marshal(visionReq{
 		Model: a.Model, System: system, MaxTokens: maxTokens,
 		Messages: []visionMessage{
@@ -142,16 +144,24 @@ func (a *Anthropic) CompleteWithImage(ctx context.Context, system, prompt, base6
 	req.Header.Set("anthropic-version", a.Version)
 
 	res, err := a.HTTP.Do(req)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		buf, _ := io.ReadAll(res.Body)
 		return "", fmt.Errorf("anthropic vision %d: %s", res.StatusCode, string(buf))
 	}
 	var out messageRes
-	if err := json.NewDecoder(res.Body).Decode(&out); err != nil { return "", err }
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return "", err
+	}
 	var sb strings.Builder
-	for _, c := range out.Content { if c.Type == "text" { sb.WriteString(c.Text) } }
+	for _, c := range out.Content {
+		if c.Type == "text" {
+			sb.WriteString(c.Text)
+		}
+	}
 	return sb.String(), nil
 }
 
@@ -207,7 +217,8 @@ func (a *Anthropic) Stream(ctx context.Context, system string, messages []Messag
 			if json.Unmarshal([]byte(data), &ev) == nil &&
 				ev.Type == "content_block_delta" && ev.Delta.Type == "text_delta" {
 				select {
-				case <-ctx.Done(): return
+				case <-ctx.Done():
+					return
 				case out <- ev.Delta.Text:
 				}
 			}

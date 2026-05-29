@@ -1,8 +1,8 @@
 // Package report — crowdsourced trek issue reports.
 //
-//   POST /v1/treks/{slug}/report      · user files an issue
-//   GET  /v1/admin/reports            · admin queue
-//   POST /v1/admin/reports/{id}/resolve · admin closes
+//	POST /v1/treks/{slug}/report      · user files an issue
+//	GET  /v1/admin/reports            · admin queue
+//	POST /v1/admin/reports/{id}/resolve · admin closes
 package report
 
 import (
@@ -20,8 +20,8 @@ type Service struct{ pool *pgxpool.Pool }
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 type createReq struct {
-	Category    string  `json:"category"`     // V2: wrong_path | blocked | unsafe | wildlife | other
-	                                          // V3: snow | trail | water
+	Category string `json:"category"` // V2: wrong_path | blocked | unsafe | wildlife | other
+	// V3: snow | trail | water
 	Body        string  `json:"body"`
 	Lat         float64 `json:"lat"`
 	Lng         float64 `json:"lng"`
@@ -36,22 +36,29 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body createReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
 	if body.Category == "" {
-		response.BadRequest(w, "category required"); return
+		response.BadRequest(w, "category required")
+		return
 	}
 
 	var trekID string
 	if err := s.pool.QueryRow(r.Context(),
 		`SELECT id::text FROM treks WHERE slug = $1`, slug,
 	).Scan(&trekID); err != nil {
-		response.NotFound(w, "trek not found"); return
+		response.NotFound(w, "trek not found")
+		return
 	}
 
 	sev := body.Severity
-	if sev < 1 { sev = 3 }
-	if sev > 5 { sev = 5 }
+	if sev < 1 {
+		sev = 3
+	}
+	if sev > 5 {
+		sev = 5
+	}
 
 	var id string
 	err := s.pool.QueryRow(r.Context(), `
@@ -67,7 +74,10 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 		RETURNING id::text
 	`, trekID, userID, body.Category, body.Body, body.Lat, body.Lng,
 		sev, body.PhotoURL, body.WaypointIdx).Scan(&id)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 
 	response.Created(w, map[string]any{"id": id, "status": "open", "severity": sev})
 }
@@ -90,7 +100,10 @@ func (s *Service) PublicList(w http.ResponseWriter, r *http.Request) {
 		ORDER BY r.severity DESC NULLS LAST, r.created_at DESC
 		LIMIT 50
 	`, slug)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -101,7 +114,10 @@ func (s *Service) PublicList(w http.ResponseWriter, r *http.Request) {
 		var sev int
 		var wpIdx *int
 		var createdAt any
-		_ = rows.Scan(&id, &cat, &sev, &body, &photoP, &wpIdx, &createdAt, &reporterP)
+		if err := rows.Scan(&id, &cat, &sev, &body, &photoP, &wpIdx, &createdAt, &reporterP); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "category": cat, "severity": sev,
 			"body": body, "photo_url": photoP, "waypoint_idx": wpIdx,
@@ -114,7 +130,9 @@ func (s *Service) PublicList(w http.ResponseWriter, r *http.Request) {
 // GET /v1/admin/reports
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
-	if status == "" { status = "open" }
+	if status == "" {
+		status = "open"
+	}
 
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT r.id::text, r.category, r.body, r.status, r.created_at,
@@ -128,7 +146,10 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		WHERE r.status = $1
 		ORDER BY r.severity DESC NULLS LAST, r.created_at DESC
 	`, status)
-	if err != nil { response.Internal(w, err); return }
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
 	defer rows.Close()
 
 	out := []map[string]any{}
@@ -139,8 +160,11 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		var lng, lat *float64
 		var sev int
 		var wpIdx *int
-		_ = rows.Scan(&id, &cat, &body, &st, &createdAt, &slug, &name, &reporter, &lng, &lat,
-			&sev, &photoURL, &wpIdx, &expiresAt)
+		if err := rows.Scan(&id, &cat, &body, &st, &createdAt, &slug, &name, &reporter, &lng, &lat,
+			&sev, &photoURL, &wpIdx, &expiresAt); err != nil {
+			response.Internal(w, err)
+			return
+		}
 		out = append(out, map[string]any{
 			"id": id, "category": cat, "body": body, "status": st,
 			"created_at": createdAt, "trek_slug": slug, "trek_name": name,
@@ -153,7 +177,7 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 }
 
 type resolveReq struct {
-	Status    string `json:"status"`     // resolved | dismissed
+	Status    string `json:"status"` // resolved | dismissed
 	AdminNote string `json:"admin_note"`
 }
 
@@ -162,14 +186,18 @@ func (s *Service) AdminResolve(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var body resolveReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.BadRequest(w, "invalid body"); return
+		response.BadRequest(w, "invalid body")
+		return
 	}
-	if body.Status == "" { body.Status = "resolved" }
+	if body.Status == "" {
+		body.Status = "resolved"
+	}
 	if _, err := s.pool.Exec(r.Context(), `
 		UPDATE trek_reports SET status = $2, admin_note = $3, resolved_at = now()
 		WHERE id = $1::uuid
 	`, id, body.Status, body.AdminNote); err != nil {
-		response.Internal(w, err); return
+		response.Internal(w, err)
+		return
 	}
 	response.OK(w, map[string]string{"status": body.Status})
 }
