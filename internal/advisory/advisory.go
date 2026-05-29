@@ -191,3 +191,79 @@ func (s *Service) AdminUpdateRoad(w http.ResponseWriter, r *http.Request) {
 	s.hub.Broadcast(map[string]any{"type": "road.status", "id": id, "status": body.Status})
 	response.OK(w, map[string]string{"status": body.Status})
 }
+
+// ─── Admin: Roads CRUD (route-aligned) ─────────────────────────
+
+func (s *Service) AdminRoadGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var road struct {
+		ID            string    `json:"id"`
+		Name          string    `json:"name"`
+		Slug          string    `json:"slug"`
+		Status        string    `json:"status"`
+		ClosureReason *string   `json:"closure_reason"`
+		LastChecked   time.Time `json:"last_checked"`
+	}
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT id::text, name, slug, current_status, closure_reason, last_checked
+		FROM roads WHERE id = $1
+	`, id).Scan(&road.ID, &road.Name, &road.Slug, &road.Status, &road.ClosureReason, &road.LastChecked)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.OK(w, road)
+}
+
+func (s *Service) AdminRoadCreate(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Name          string  `json:"name"`
+		Slug          string  `json:"slug"`
+		Status        string  `json:"status"`
+		ClosureReason *string `json:"closure_reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body"); return
+	}
+	if in.Name == "" || in.Slug == "" {
+		response.BadRequest(w, "name and slug required"); return
+	}
+	var id string
+	err := s.pool.QueryRow(r.Context(), `
+		INSERT INTO roads (name, slug, current_status, closure_reason)
+		VALUES ($1, $2, $3, $4) RETURNING id::text
+	`, in.Name, in.Slug, in.Status, in.ClosureReason).Scan(&id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.Created(w, map[string]string{"id": id})
+}
+
+func (s *Service) AdminRoadUpdate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var in struct {
+		Name          string  `json:"name"`
+		Slug          string  `json:"slug"`
+		Status        string  `json:"status"`
+		ClosureReason *string `json:"closure_reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body"); return
+	}
+	_, err := s.pool.Exec(r.Context(), `
+		UPDATE roads SET name=$2, slug=$3, current_status=$4, closure_reason=$5, last_checked=now()
+		WHERE id=$1
+	`, id, in.Name, in.Slug, in.Status, in.ClosureReason)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.OK(w, map[string]string{"updated": id})
+}
+
+func (s *Service) AdminRoadDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM roads WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.NoContent(w)
+}

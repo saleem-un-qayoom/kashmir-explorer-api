@@ -39,6 +39,8 @@ type Destination struct {
 	EntryFeeINR int    `json:"entry_fee_inr"`
 	Permits    []string `json:"permits,omitempty"`
 	Categories []string `json:"categories,omitempty"`
+	Features   []string `json:"features,omitempty"` // AllTrails-style tags (migration 0010)
+	HeroImageURL *string `json:"hero_image_url,omitempty"` // joined from images WHERE is_hero=true
 }
 
 // GET /v1/destinations  ?region=&category=&season=&sort=&page=&limit=
@@ -58,7 +60,11 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
 		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr, d.permits,
-		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}')
+		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
+		       COALESCE(d.features, '{}'::TEXT[]),
+		       (SELECT url FROM images i
+		         WHERE i.destination_id = d.id
+		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
 		FROM destinations d
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
@@ -88,7 +94,7 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 			&d.Tagline, &d.Uniqueness, &d.Lng, &d.Lat,
 			&d.AltitudeM, &d.BestMonths, &d.SeasonType,
 			&d.Rating, &d.ReviewCount, &d.DistanceFromSrinagar, &d.EntryFeeINR, &d.Permits,
-			&d.Categories,
+			&d.Categories, &d.Features, &d.HeroImageURL,
 		); err != nil {
 			response.Internal(w, err)
 			return
@@ -203,17 +209,22 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	var d Destination
 	err := s.pool.QueryRow(r.Context(), `
-		SELECT id::text, slug, name, name_urdu, name_hindi, district,
-		       tagline, uniqueness,
-		       ST_X(location::geometry), ST_Y(location::geometry),
-		       altitude_m, best_months, season_type, rating, review_count,
-		       distance_from_srinagar_km, entry_fee_inr, permits
-		FROM destinations WHERE slug = $1 AND is_published = true
+		SELECT d.id::text, d.slug, d.name, d.name_urdu, d.name_hindi, d.district,
+		       d.tagline, d.uniqueness,
+		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
+		       d.altitude_m, d.best_months, d.season_type, d.rating, d.review_count,
+		       d.distance_from_srinagar_km, d.entry_fee_inr, d.permits,
+		       COALESCE(d.features, '{}'::TEXT[]),
+		       (SELECT url FROM images i
+		         WHERE i.destination_id = d.id
+		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
+		FROM destinations d WHERE d.slug = $1 AND d.is_published = true
 	`, slug).Scan(
 		&d.ID, &d.Slug, &d.Name, &d.NameUrdu, &d.NameHindi, &d.District,
 		&d.Tagline, &d.Uniqueness, &d.Lng, &d.Lat,
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType, &d.Rating, &d.ReviewCount,
 		&d.DistanceFromSrinagar, &d.EntryFeeINR, &d.Permits,
+		&d.Features, &d.HeroImageURL,
 	)
 	if err != nil {
 		response.NotFound(w, "destination not found")
@@ -261,29 +272,33 @@ func (s *Service) Regions(w http.ResponseWriter, r *http.Request) {
 // ─── Admin ────────────────────────────────────────────────────
 
 type AdminDest struct {
-	ID          string   `json:"id"`
-	Slug        string   `json:"slug"`
-	Name        string   `json:"name"`
-	NameUrdu    *string  `json:"name_urdu"`
-	NameHindi   *string  `json:"name_hindi"`
-	District    *string  `json:"district"`
-	RegionSlug  *string  `json:"region_slug"`
-	Tagline     *string  `json:"tagline"`
-	Uniqueness  *string  `json:"uniqueness"`
-	Description *string  `json:"description"`
-	Lat         float64  `json:"lat"`
-	Lng         float64  `json:"lng"`
-	AltitudeM   *int     `json:"altitude_m"`
-	BestMonths  []int    `json:"best_months"`
-	SeasonType  *string  `json:"season_type"`
-	Rating      float64  `json:"rating"`
-	ReviewCount int      `json:"review_count"`
-	DistFromSgr *int     `json:"distance_from_srinagar_km"`
-	EntryFee    int      `json:"entry_fee_inr"`
-	Permits     []string `json:"permits"`
-	Categories  []string `json:"categories"`
-	IsPublished bool     `json:"is_published"`
-	IsFeatured  bool     `json:"is_featured"`
+	ID              string          `json:"id"`
+	Slug            string          `json:"slug"`
+	Name            string          `json:"name"`
+	NameUrdu        *string         `json:"name_urdu"`
+	NameHindi       *string         `json:"name_hindi"`
+	District        *string         `json:"district"`
+	RegionSlug      *string         `json:"region_slug"`
+	Tagline         *string         `json:"tagline"`
+	Uniqueness      *string         `json:"uniqueness"`
+	Description     *string         `json:"description"`
+	Lat             float64         `json:"lat"`
+	Lng             float64         `json:"lng"`
+	AltitudeM       *int            `json:"altitude_m"`
+	BestMonths      []int           `json:"best_months"`
+	SeasonType      *string         `json:"season_type"`
+	Rating          float64         `json:"rating"`
+	ReviewCount     int             `json:"review_count"`
+	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
+	EntryFee        int             `json:"entry_fee_inr"`
+	Permits         []string        `json:"permits"`
+	Activities      []string        `json:"activities"`
+	NetworkCoverage json.RawMessage `json:"network_coverage"`
+	Practical       json.RawMessage `json:"practical"`
+	Categories      []string        `json:"categories"`
+	IsPublished     bool            `json:"is_published"`
+	IsFeatured      bool            `json:"is_featured"`
+	Features        []string        `json:"features"` // AllTrails-style tags
 }
 
 // GET /admin/destinations — all destinations including unpublished
@@ -295,11 +310,15 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		       d.altitude_m, d.best_months, d.season_type,
 		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
 		       d.permits, d.is_published, d.is_featured,
-		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}')
+		       d.network_coverage, d.practical,
+		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
+		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
+		       COALESCE(d.features, '{}'::TEXT[])
 		FROM destinations d
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
 		LEFT JOIN categories c ON c.id = dc.category_id
+		LEFT JOIN destination_activities a ON a.destination_id = d.id
 		GROUP BY d.id, r.slug
 		ORDER BY d.name
 	`)
@@ -319,7 +338,8 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 			&d.AltitudeM, &d.BestMonths, &d.SeasonType,
 			&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
 			&d.Permits, &d.IsPublished, &d.IsFeatured,
-			&d.Categories,
+			&d.NetworkCoverage, &d.Practical,
+			&d.Categories, &d.Activities, &d.Features,
 		); err != nil {
 			response.Internal(w, err)
 			return
@@ -340,11 +360,15 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		       d.altitude_m, d.best_months, d.season_type,
 		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
 		       d.permits, d.is_published, d.is_featured,
-		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}')
+		       d.network_coverage, d.practical,
+		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
+		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
+		       COALESCE(d.features, '{}'::TEXT[])
 		FROM destinations d
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
 		LEFT JOIN categories c ON c.id = dc.category_id
+		LEFT JOIN destination_activities a ON a.destination_id = d.id
 		WHERE d.id = $1
 		GROUP BY d.id, r.slug
 	`, id).Scan(
@@ -354,7 +378,8 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType,
 		&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
 		&d.Permits, &d.IsPublished, &d.IsFeatured,
-		&d.Categories,
+		&d.NetworkCoverage, &d.Practical,
+		&d.Categories, &d.Activities,
 	)
 	if err != nil {
 		response.Internal(w, err)
@@ -364,26 +389,30 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 }
 
 type AdminDestInput struct {
-	Name        string   `json:"name"`
-	NameUrdu    *string  `json:"name_urdu"`
-	NameHindi   *string  `json:"name_hindi"`
-	Slug        string   `json:"slug"`
-	RegionSlug  string   `json:"region_slug"`
-	District    *string  `json:"district"`
-	Tagline     *string  `json:"tagline"`
-	Uniqueness  *string  `json:"uniqueness"`
-	Lat         float64  `json:"lat"`
-	Lng         float64  `json:"lng"`
-	AltitudeM   *int     `json:"altitude_m"`
-	BestMonths  []int    `json:"best_months"`
-	SeasonType  *string  `json:"season_type"`
-	DistFromSgr *int     `json:"distance_from_srinagar_km"`
-	EntryFee    int      `json:"entry_fee_inr"`
-	Permits     []string `json:"permits"`
-	Categories  []string `json:"categories"`
-	IsPublished bool     `json:"is_published"`
-	IsFeatured  bool     `json:"is_featured"`
-	Description *string  `json:"description"`
+	Name            string          `json:"name"`
+	NameUrdu        *string         `json:"name_urdu"`
+	NameHindi       *string         `json:"name_hindi"`
+	Slug            string          `json:"slug"`
+	RegionSlug      string          `json:"region_slug"`
+	District        *string         `json:"district"`
+	Tagline         *string         `json:"tagline"`
+	Uniqueness      *string         `json:"uniqueness"`
+	Lat             float64         `json:"lat"`
+	Lng             float64         `json:"lng"`
+	AltitudeM       *int            `json:"altitude_m"`
+	BestMonths      []int           `json:"best_months"`
+	SeasonType      *string         `json:"season_type"`
+	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
+	EntryFee        int             `json:"entry_fee_inr"`
+	Permits         []string        `json:"permits"`
+	Activities      []string        `json:"activities"`
+	NetworkCoverage json.RawMessage `json:"network_coverage"`
+	Practical       json.RawMessage `json:"practical"`
+	Categories      []string        `json:"categories"`
+	IsPublished     bool            `json:"is_published"`
+	IsFeatured      bool            `json:"is_featured"`
+	Description     *string         `json:"description"`
+	Features        []string        `json:"features"` // AllTrails-style tags (migration 0010)
 }
 
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
@@ -402,17 +431,21 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO destinations
 			(name, name_urdu, name_hindi, slug, region_id, district, tagline, uniqueness,
 			 description, location, altitude_m, best_months, season_type,
-			 distance_from_srinagar_km, entry_fee_inr, permits, is_published, is_featured)
+			 distance_from_srinagar_km, entry_fee_inr, permits,
+			 network_coverage, practical,
+			 is_published, is_featured, features)
 		VALUES ($1, $2, $3, $4,
 			(SELECT id FROM regions WHERE slug = $5),
 			$6, $7, $8, $9,
 			ST_GeogFromText('POINT(' || $10::text || ' ' || $11::text || ')'),
-			$12, $13, $14, $15, $16, $17, $18, $19)
+			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
 		RETURNING id::text
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
 		in.Lng, in.Lat, in.AltitudeM, in.BestMonths, in.SeasonType,
-		in.DistFromSgr, in.EntryFee, in.Permits, in.IsPublished, in.IsFeatured,
+		in.DistFromSgr, in.EntryFee, in.Permits,
+		in.NetworkCoverage, in.Practical,
+		in.IsPublished, in.IsFeatured, in.Features,
 	).Scan(&id)
 	if err != nil {
 		response.Internal(w, err)
@@ -426,6 +459,13 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 			SELECT $1::uuid, id FROM categories WHERE slug = $2
 			ON CONFLICT DO NOTHING
 		`, id, slug)
+	}
+	// Link activities
+	for _, act := range in.Activities {
+		_, _ = s.pool.Exec(r.Context(), `
+			INSERT INTO destination_activities (destination_id, activity)
+			VALUES ($1, $2) ON CONFLICT DO NOTHING
+		`, id, act)
 	}
 
 	response.OK(w, map[string]string{"id": id})
@@ -447,13 +487,18 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 			location = ST_GeogFromText('POINT(' || $10::text || ' ' || $11::text || ')'),
 			altitude_m = $12, best_months = $13, season_type = $14,
 			distance_from_srinagar_km = $15, entry_fee_inr = $16,
-			permits = $17, is_published = $18, is_featured = $19,
+			permits = $17,
+			network_coverage = $18, practical = $19,
+			is_published = $20, is_featured = $21,
+			features = $22,
 			updated_at = now()
-		WHERE id = $20
+		WHERE id = $23
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
 		in.Lng, in.Lat, in.AltitudeM, in.BestMonths, in.SeasonType,
-		in.DistFromSgr, in.EntryFee, in.Permits, in.IsPublished, in.IsFeatured,
+		in.DistFromSgr, in.EntryFee, in.Permits,
+		in.NetworkCoverage, in.Practical,
+		in.IsPublished, in.IsFeatured, in.Features,
 		id,
 	)
 	if err != nil {
@@ -470,6 +515,14 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 			ON CONFLICT DO NOTHING
 		`, id, slug)
 	}
+	// Re-link activities
+	_, _ = s.pool.Exec(r.Context(), `DELETE FROM destination_activities WHERE destination_id = $1`, id)
+	for _, act := range in.Activities {
+		_, _ = s.pool.Exec(r.Context(), `
+			INSERT INTO destination_activities (destination_id, activity)
+			VALUES ($1, $2) ON CONFLICT DO NOTHING
+		`, id, act)
+	}
 
 	response.OK(w, map[string]string{"updated": id})
 }
@@ -482,6 +535,154 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.OK(w, map[string]string{"unpublished": id})
+}
+
+// ─── Admin: Categories ──────────────────────────────────────────
+
+func (s *Service) AdminCategoryGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var c struct {
+		ID    string  `json:"id"`
+		Name  string  `json:"name"`
+		Slug  string  `json:"slug"`
+		Icon  *string `json:"icon"`
+		Color *string `json:"color"`
+	}
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT id::text, name, slug, icon, color FROM categories WHERE id = $1
+	`, id).Scan(&c.ID, &c.Name, &c.Slug, &c.Icon, &c.Color)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, c)
+}
+
+func (s *Service) AdminCategoryCreate(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Name  string  `json:"name"`
+		Slug  string  `json:"slug"`
+		Icon  *string `json:"icon"`
+		Color *string `json:"color"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body")
+		return
+	}
+	var id string
+	err := s.pool.QueryRow(r.Context(), `
+		INSERT INTO categories (name, slug, icon, color)
+		VALUES ($1, $2, $3, $4) RETURNING id::text
+	`, in.Name, in.Slug, in.Icon, in.Color).Scan(&id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.Created(w, map[string]string{"id": id})
+}
+
+func (s *Service) AdminCategoryUpdate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var in struct {
+		Name  string  `json:"name"`
+		Slug  string  `json:"slug"`
+		Icon  *string `json:"icon"`
+		Color *string `json:"color"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body")
+		return
+	}
+	_, err := s.pool.Exec(r.Context(), `
+		UPDATE categories SET name = $1, slug = $2, icon = $3, color = $4 WHERE id = $5
+	`, in.Name, in.Slug, in.Icon, in.Color, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, map[string]string{"updated": id})
+}
+
+func (s *Service) AdminCategoryDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM categories WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.NoContent(w)
+}
+
+// ─── Admin: Regions ─────────────────────────────────────────────
+
+func (s *Service) AdminRegionGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var reg struct {
+		ID          string  `json:"id"`
+		Name        string  `json:"name"`
+		Slug        string  `json:"slug"`
+		Description *string `json:"description"`
+	}
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT id::text, name, slug, description FROM regions WHERE id = $1
+	`, id).Scan(&reg.ID, &reg.Name, &reg.Slug, &reg.Description)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, reg)
+}
+
+func (s *Service) AdminRegionCreate(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Name        string  `json:"name"`
+		Slug        string  `json:"slug"`
+		Description *string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body")
+		return
+	}
+	var id string
+	err := s.pool.QueryRow(r.Context(), `
+		INSERT INTO regions (name, slug, description) VALUES ($1, $2, $3) RETURNING id::text
+	`, in.Name, in.Slug, in.Description).Scan(&id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.Created(w, map[string]string{"id": id})
+}
+
+func (s *Service) AdminRegionUpdate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var in struct {
+		Name        string  `json:"name"`
+		Slug        string  `json:"slug"`
+		Description *string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body")
+		return
+	}
+	_, err := s.pool.Exec(r.Context(), `
+		UPDATE regions SET name = $1, slug = $2, description = $3 WHERE id = $4
+	`, in.Name, in.Slug, in.Description, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, map[string]string{"updated": id})
+}
+
+func (s *Service) AdminRegionDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM regions WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.NoContent(w)
 }
 
 // ─── helpers ────────────────────────────────────────────────────

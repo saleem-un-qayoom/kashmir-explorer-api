@@ -27,6 +27,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/cultural"
 	"github.com/kashmir-explorer/api/internal/destination"
 	"github.com/kashmir-explorer/api/internal/groups"
+	"github.com/kashmir-explorer/api/internal/image"
 	"github.com/kashmir-explorer/api/internal/jobs"
 	mw "github.com/kashmir-explorer/api/internal/middleware"
 	"github.com/kashmir-explorer/api/internal/permit"
@@ -102,6 +103,7 @@ func main() {
 	searchSvc := search.NewService(pool, cfg.VoyageKey)
 	crowdSvc  := crowd.NewService(pool, rooms)
 	groupSvc  := groups.NewService(pool)
+	imgSvc    := image.NewService(pool)
 	reportSvc := report.NewService(pool)
 	walletSvc := wallet.NewService(pool, cfg.ApplePassTypeID, cfg.OAuth.AppleTeamID)
 	subSvc    := subscription.NewService(pool, cfg.Razorpay)
@@ -164,14 +166,17 @@ func main() {
 		// Semantic search (public).
 		r.Get("/search", searchSvc.Search)
 
-		r.Get("/categories", destSvc.Categories)
-		r.Get("/regions",    destSvc.Regions)
+		r.Get("/categories",       destSvc.Categories)
+		r.Get("/categories/{id}",  destSvc.AdminCategoryGet)
+		r.Get("/regions",          destSvc.Regions)
+		r.Get("/regions/{id}",     destSvc.AdminRegionGet)
 
 		r.Route("/advisories", func(r chi.Router) {
 			r.Get("/",                 advSvc.List)
 			r.Get("/destination/{id}", advSvc.ForDestination)
 		})
-		r.Get("/roads/status", advSvc.RoadStatus)
+		r.Get("/roads/status",    advSvc.RoadStatus)
+		r.Get("/roads/status/{id}", advSvc.AdminRoadGet)
 
 		r.Get("/weather/destination/{slug}", wthSvc.ForDestination)
 
@@ -181,15 +186,25 @@ func main() {
 		})
 
 		r.Route("/cultural", func(r chi.Router) {
-			r.Get("/food",      culSvc.Food)
-			r.Get("/festivals", culSvc.Festivals)
-			r.Get("/crafts",    culSvc.Crafts)
-			r.Get("/etiquette", culSvc.Etiquette)
+			r.Get("/food",           culSvc.Food)
+			r.Get("/food/{id}",      culSvc.AdminGet)
+			r.Get("/festivals",      culSvc.Festivals)
+			r.Get("/festivals/{id}", culSvc.AdminGet)
+			r.Get("/crafts",         culSvc.Crafts)
+			r.Get("/crafts/{id}",    culSvc.AdminGet)
+			r.Get("/etiquette",      culSvc.Etiquette)
+			r.Get("/etiquette/{id}", culSvc.AdminGet)
 		})
 
 		r.Route("/permits", func(r chi.Router) {
 			r.Get("/",      permSvc.List)
 			r.Get("/check", permSvc.Check)
+			r.Get("/{id}",  permSvc.AdminGet)
+		})
+
+		r.Route("/images", func(r chi.Router) {
+			r.Get("/destination/{id}", imgSvc.ForDestination)
+			r.Get("/trek/{id}",        imgSvc.ForTrek)
 		})
 
 		r.Route("/ai", func(r chi.Router) {
@@ -259,32 +274,94 @@ func main() {
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(mw.Auth(cfg.JWT), mw.RequireAdmin)
 
+			// Destinations
 			r.Get("/destinations",             destSvc.AdminList)
 			r.Get("/destinations/{id}",        destSvc.AdminGet)
 			r.Post("/destinations",            destSvc.AdminCreate)
 			r.Put("/destinations/{id}",        destSvc.AdminUpdate)
 			r.Delete("/destinations/{id}",     destSvc.AdminDelete)
 
+			// Treks
+			r.Get("/treks",                    trekSvc.AdminList)
+			r.Get("/treks/{id}",               trekSvc.AdminGet)
 			r.Post("/treks",                   trekSvc.AdminCreate)
 			r.Put("/treks/{id}",               trekSvc.AdminUpdate)
+			r.Delete("/treks/{id}",            trekSvc.AdminDelete)
 
+			// Advisories
 			r.Post("/advisories",              advSvc.AdminCreate)
 			r.Put("/advisories/{id}",          advSvc.AdminUpdate)
 			r.Delete("/advisories/{id}",       advSvc.AdminDelete)
-			r.Put("/roads/{id}/status",        advSvc.AdminUpdateRoad)
 
-			r.Post("/providers/{id}/verify",   provSvc.AdminVerify)
-			r.Post("/cultural",                culSvc.AdminCreate)
+			// Roads (status/ prefix matches frontend crud)
+			r.Get("/roads/status",             advSvc.RoadStatus)
+			r.Get("/roads/status/{id}",        advSvc.AdminRoadGet)
+			r.Post("/roads/status",            advSvc.AdminRoadCreate)
+			r.Put("/roads/status/{id}",        advSvc.AdminRoadUpdate)
+			r.Delete("/roads/status/{id}",     advSvc.AdminRoadDelete)
+			r.Put("/roads/{id}/status",        advSvc.AdminUpdateRoad) // legacy compat
+
+			// Categories
+			r.Post("/categories",              destSvc.AdminCategoryCreate)
+			r.Put("/categories/{id}",          destSvc.AdminCategoryUpdate)
+			r.Delete("/categories/{id}",       destSvc.AdminCategoryDelete)
+
+			// Regions
+			r.Post("/regions",                 destSvc.AdminRegionCreate)
+			r.Put("/regions/{id}",             destSvc.AdminRegionUpdate)
+			r.Delete("/regions/{id}",          destSvc.AdminRegionDelete)
+
+			// Permits
+			r.Post("/permits",                 permSvc.AdminCreate)
+			r.Put("/permits/{id}",             permSvc.AdminUpdate)
+			r.Delete("/permits/{id}",          permSvc.AdminDelete)
+
+			// Cultural (per-subtype routes)
+			r.Route("/cultural", func(r chi.Router) {
+				r.Post("/food",        culSvc.AdminCreateFor("dish"))
+				r.Put("/food/{id}",    culSvc.AdminUpdate)
+				r.Delete("/food/{id}", culSvc.AdminDelete)
+
+				r.Post("/festivals",        culSvc.AdminCreateFor("festival"))
+				r.Put("/festivals/{id}",    culSvc.AdminUpdate)
+				r.Delete("/festivals/{id}", culSvc.AdminDelete)
+
+				r.Post("/crafts",        culSvc.AdminCreateFor("craft"))
+				r.Put("/crafts/{id}",    culSvc.AdminUpdate)
+				r.Delete("/crafts/{id}", culSvc.AdminDelete)
+
+				r.Post("/etiquette",        culSvc.AdminCreateFor("etiquette"))
+				r.Put("/etiquette/{id}",    culSvc.AdminUpdate)
+				r.Delete("/etiquette/{id}", culSvc.AdminDelete)
+			})
+
+			// Photo spots
+			r.Get("/photo-spots",            photoSvc.AdminList)
+			r.Get("/photo-spots/{id}",       photoSvc.AdminGet)
+			r.Post("/photo-spots",           photoSvc.AdminCreate)
+			r.Put("/photo-spots/{id}",       photoSvc.AdminUpdate)
+			r.Delete("/photo-spots/{id}",    photoSvc.AdminDelete)
+
+			// Images
+			r.Post("/images",                imgSvc.AdminCreate)
+			r.Put("/images/{id}",            imgSvc.AdminUpdate)
+			r.Delete("/images/{id}",         imgSvc.AdminDelete)
+
+			// Providers
+			r.Post("/providers/{id}/verify", provSvc.AdminVerify)
+
+			// Legacy: POST /admin/cultural (generic type body)
+			r.Post("/cultural",              culSvc.AdminCreate)
 
 			// Trek reports queue.
-			r.Get("/reports",                  reportSvc.AdminList)
-			r.Post("/reports/{id}/resolve",    reportSvc.AdminResolve)
+			r.Get("/reports",                reportSvc.AdminList)
+			r.Post("/reports/{id}/resolve",  reportSvc.AdminResolve)
 
 			// V3 · all track recordings (moderation / abuse triage)
-			r.Get("/tracks",                   trekV3.AdminTracks)
+			r.Get("/tracks",                 trekV3.AdminTracks)
 
 			// Embeddings reindex.
-			r.Post("/reindex",                 searchSvc.Reindex)
+			r.Post("/reindex",               searchSvc.Reindex)
 		})
 	})
 

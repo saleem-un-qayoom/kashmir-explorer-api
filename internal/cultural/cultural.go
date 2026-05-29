@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kashmir-explorer/api/pkg/response"
 )
@@ -134,4 +135,81 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		response.Internal(w, err); return
 	}
 	response.Created(w, map[string]bool{"created": true})
+}
+
+// ─── Admin CRUD ────────────────────────────────────────────────
+
+func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var item struct {
+		ID          string          `json:"id"`
+		Type        string          `json:"type"`
+		Name        string          `json:"name"`
+		Description string          `json:"description"`
+		Details     json.RawMessage `json:"details"`
+		NameLocal   json.RawMessage `json:"name_local"`
+	}
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT id::text, type, name, COALESCE(description, ''),
+		       COALESCE(details, '{}'::jsonb), COALESCE(name_local, '{}'::jsonb)
+		FROM cultural_items WHERE id = $1
+	`, id).Scan(&item.ID, &item.Type, &item.Name, &item.Description, &item.Details, &item.NameLocal)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.OK(w, item)
+}
+
+// AdminCreateFor returns a handler scoped to a cultural type.
+func (s *Service) AdminCreateFor(ctype string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Name        string          `json:"name"`
+			Description string          `json:"description"`
+			Details     json.RawMessage `json:"details"`
+			NameLocal   json.RawMessage `json:"name_local"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			response.BadRequest(w, "invalid body"); return
+		}
+		var id string
+		err := s.pool.QueryRow(r.Context(), `
+			INSERT INTO cultural_items (type, name, description, details, name_local)
+			VALUES ($1, $2, $3, $4, $5) RETURNING id::text
+		`, ctype, body.Name, body.Description, body.Details, body.NameLocal).Scan(&id)
+		if err != nil {
+			response.Internal(w, err); return
+		}
+		response.Created(w, map[string]string{"id": id})
+	}
+}
+
+func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var body struct {
+		Name        string          `json:"name"`
+		Description string          `json:"description"`
+		Details     json.RawMessage `json:"details"`
+		NameLocal   json.RawMessage `json:"name_local"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		response.BadRequest(w, "invalid body"); return
+	}
+	_, err := s.pool.Exec(r.Context(), `
+		UPDATE cultural_items SET name=$1, description=$2, details=$3, name_local=$4
+		WHERE id=$5
+	`, body.Name, body.Description, body.Details, body.NameLocal, id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.OK(w, map[string]string{"updated": id})
+}
+
+func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM cultural_items WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.NoContent(w)
 }

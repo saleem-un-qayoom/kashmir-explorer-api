@@ -2,9 +2,11 @@
 package permit
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kashmir-explorer/api/pkg/response"
 )
@@ -83,6 +85,103 @@ func (s *Service) Check(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	response.OK(w, out)
+}
+
+// ─── Admin CRUD ────────────────────────────────────────────────
+
+func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var p struct {
+		ID             string  `json:"id"`
+		Name           string  `json:"name"`
+		Required       string  `json:"required"`
+		Office         string  `json:"office"`
+		ProcessingDays string  `json:"processing_days"`
+		CostInr        string  `json:"cost_inr"`
+		Validity       string  `json:"validity"`
+		Status         string  `json:"status"`
+		Notes          *string `json:"notes"`
+		OfficialURL    *string `json:"official_url"`
+	}
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT id::text, name, required, office, processing_days,
+		       cost_inr, validity, status, notes, official_url
+		FROM permits WHERE id = $1
+	`, id).Scan(&p.ID, &p.Name, &p.Required, &p.Office, &p.ProcessingDays,
+		&p.CostInr, &p.Validity, &p.Status, &p.Notes, &p.OfficialURL)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	response.OK(w, p)
+}
+
+func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Slug           string  `json:"slug"`
+		Name           string  `json:"name"`
+		Required       string  `json:"required"`
+		Office         string  `json:"office"`
+		ProcessingDays string  `json:"processing_days"`
+		CostInr        string  `json:"cost_inr"`
+		Validity       string  `json:"validity"`
+		Status         string  `json:"status"`
+		Notes          *string `json:"notes"`
+		OfficialURL    *string `json:"official_url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body"); return
+	}
+	var id string
+	err := s.pool.QueryRow(r.Context(), `
+		INSERT INTO permits (slug, name, required, office, processing_days,
+		                    cost_inr, validity, status, notes, official_url)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id::text
+	`, in.Slug, in.Name, in.Required, in.Office, in.ProcessingDays,
+		in.CostInr, in.Validity, in.Status, in.Notes, in.OfficialURL).Scan(&id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.Created(w, map[string]string{"id": id})
+}
+
+func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var in struct {
+		Slug           string  `json:"slug"`
+		Name           string  `json:"name"`
+		Required       string  `json:"required"`
+		Office         string  `json:"office"`
+		ProcessingDays string  `json:"processing_days"`
+		CostInr        string  `json:"cost_inr"`
+		Validity       string  `json:"validity"`
+		Status         string  `json:"status"`
+		Notes          *string `json:"notes"`
+		OfficialURL    *string `json:"official_url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		response.BadRequest(w, "invalid body"); return
+	}
+	_, err := s.pool.Exec(r.Context(), `
+		UPDATE permits SET slug=$1, name=$2, required=$3, office=$4,
+		                  processing_days=$5, cost_inr=$6, validity=$7,
+		                  status=$8, notes=$9, official_url=$10
+		WHERE id=$11
+	`, in.Slug, in.Name, in.Required, in.Office, in.ProcessingDays,
+		in.CostInr, in.Validity, in.Status, in.Notes, in.OfficialURL, id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.OK(w, map[string]string{"updated": id})
+}
+
+func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, err := s.pool.Exec(r.Context(), `DELETE FROM permits WHERE id = $1`, id)
+	if err != nil {
+		response.Internal(w, err); return
+	}
+	response.NoContent(w)
 }
 
 func lcShort(in []string) []string {
