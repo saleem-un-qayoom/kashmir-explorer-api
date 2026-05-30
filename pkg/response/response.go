@@ -50,6 +50,13 @@ func NotFound(w http.ResponseWriter, msg string) {
 	write(w, http.StatusNotFound, Envelope{Error: msg, Code: "not_found"})
 }
 
+// Error writes an arbitrary status with a machine-readable code and message.
+// Use the named helpers (BadRequest, NotFound, …) for the common cases; this
+// is for statuses without a dedicated helper, e.g. 503 Service Unavailable.
+func Error(w http.ResponseWriter, status int, code, msg string) {
+	write(w, status, Envelope{Error: msg, Code: code})
+}
+
 func Internal(w http.ResponseWriter, err error) {
 	msg := "internal server error"
 	if err != nil {

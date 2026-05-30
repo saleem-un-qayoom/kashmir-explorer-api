@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,7 +53,10 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		panic(err)
+		// Logger isn't configured yet (it needs cfg), so write to stderr
+		// and exit non-zero rather than panicking with a stack trace.
+		fmt.Fprintln(os.Stderr, "fatal: config:", err)
+		os.Exit(1)
 	}
 
 	log := logger.New(cfg.LogLevel, cfg.Env)
@@ -76,7 +80,20 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	poolCfg, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	if err != nil {
+		log.Error("db config parse", slog.Any("err", err))
+		os.Exit(1)
+	}
+	// Tuned pool sizing for production load. pgx defaults to MaxConns =
+	// max(4, numCPU) and no idle/lifetime caps, which under-utilises larger
+	// instances and lets connections go stale behind PgBouncer/Neon.
+	poolCfg.MaxConns = 20
+	poolCfg.MinConns = 2
+	poolCfg.MaxConnLifetime = time.Hour
+	poolCfg.MaxConnIdleTime = 30 * time.Minute
+	poolCfg.HealthCheckPeriod = time.Minute
+	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 	if err != nil {
 		log.Error("db connect", slog.Any("err", err))
 		os.Exit(1)
@@ -134,12 +151,25 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// Liveness: process is up. Cheap, never touches dependencies.
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		response.OK(w, map[string]any{
 			"status": "ok", "service": "kashmir-explorer-api",
 			"version": "0.1.0", "time": time.Now().UTC(),
 			"ws_clients": hub.Count(),
 		})
+	})
+
+	// Readiness: only "ready" when the database is reachable. Load balancers
+	// and orchestrators should gate traffic on this, not /healthz.
+	r.Get("/readyz", func(w http.ResponseWriter, req *http.Request) {
+		pingCtx, cancelPing := context.WithTimeout(req.Context(), 2*time.Second)
+		defer cancelPing()
+		if err := pool.Ping(pingCtx); err != nil {
+			response.Error(w, http.StatusServiceUnavailable, "not_ready", "database unreachable")
+			return
+		}
+		response.OK(w, map[string]any{"status": "ready"})
 	})
 
 	// ── WebSocket
@@ -388,6 +418,12 @@ func main() {
 		Addr:              ":" + cfg.Port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// WriteTimeout is intentionally 0: /ai/ask streams SSE responses and
+		// the WS upgrade endpoints are long-lived, so a server-wide write
+		// deadline would sever them. The chi Timeout middleware (15s) bounds
+		// the ordinary request handlers instead.
 	}
 
 	// Background jobs.

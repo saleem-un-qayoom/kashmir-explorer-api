@@ -227,11 +227,19 @@ func (s *Service) Bbox(w http.ResponseWriter, r *http.Request) {
 	}
 	minLat, minLng, maxLat, maxLng := parts[0], parts[1], parts[2], parts[3]
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT id::text, slug, name, ST_X(location::geometry), ST_Y(location::geometry)
-		FROM destinations
-		WHERE is_published = true
-		  AND ST_Within(location::geometry,
+		SELECT d.id::text, d.slug, d.name,
+		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
+		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
+		       (SELECT url FROM images i
+		         WHERE i.destination_id = d.id
+		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
+		FROM destinations d
+		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
+		LEFT JOIN categories c ON c.id = dc.category_id
+		WHERE d.is_published = true
+		  AND ST_Within(d.location::geometry,
 		    ST_MakeEnvelope($1, $2, $3, $4, 4326))
+		GROUP BY d.id
 		LIMIT 500
 	`, minLng, minLat, maxLng, maxLat)
 	if err != nil {
@@ -243,11 +251,16 @@ func (s *Service) Bbox(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id, slug, name string
 		var lng, lat float64
-		if err := rows.Scan(&id, &slug, &name, &lng, &lat); err != nil {
+		var categories []string
+		var heroURL *string
+		if err := rows.Scan(&id, &slug, &name, &lng, &lat, &categories, &heroURL); err != nil {
 			response.Internal(w, err)
 			return
 		}
-		out = append(out, map[string]any{"id": id, "slug": slug, "name": name, "lng": lng, "lat": lat})
+		out = append(out, map[string]any{
+			"id": id, "slug": slug, "name": name, "lng": lng, "lat": lat,
+			"categories": categories, "hero_image_url": heroURL,
+		})
 	}
 	response.OK(w, out)
 }
