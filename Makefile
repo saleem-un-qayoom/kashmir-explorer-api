@@ -8,7 +8,7 @@
 #
 # Both flows converge on `make migrate-up`.
 
-.PHONY: run dev tidy sqlc test fmt \
+.PHONY: run dev tidy sqlc test fmt swagger \
         migrate-up migrate-down migrate-status migrate-reset \
         db-start db-stop db-create db-init db-check
 
@@ -44,6 +44,11 @@ migrate-reset:
 
 sqlc:
 	sqlc generate
+
+# Regenerate the OpenAPI/Swagger docs from handler annotations into docs/.
+# Install the CLI once: go install github.com/swaggo/swag/cmd/swag@latest
+swagger:
+	swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
 
 test:
 	go test ./... -race -cover

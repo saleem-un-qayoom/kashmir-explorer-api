@@ -1,0 +1,1091 @@
+basePath: /
+definitions:
+  github_com_kashmir-explorer_api_pkg_response.Envelope:
+    properties:
+      code:
+        type: string
+      data: {}
+      error:
+        type: string
+      meta: {}
+    type: object
+  internal_destination.AdminDest:
+    properties:
+      activities:
+        items:
+          type: string
+        type: array
+      altitude_m:
+        type: integer
+      best_months:
+        items:
+          type: integer
+        type: array
+      categories:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      distance_from_srinagar_km:
+        type: integer
+      district:
+        type: string
+      entry_fee_inr:
+        type: integer
+      features:
+        description: AllTrails-style tags
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      is_deleted:
+        type: boolean
+      is_featured:
+        type: boolean
+      is_published:
+        type: boolean
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      name_hindi:
+        type: string
+      name_urdu:
+        type: string
+      network_coverage:
+        items:
+          type: integer
+        type: array
+      permits:
+        items:
+          type: string
+        type: array
+      practical:
+        items:
+          type: integer
+        type: array
+      rating:
+        type: number
+      region_slug:
+        type: string
+      review_count:
+        type: integer
+      season_type:
+        type: string
+      slug:
+        type: string
+      tagline:
+        type: string
+      uniqueness:
+        type: string
+    type: object
+  internal_destination.AdminDestInput:
+    properties:
+      activities:
+        items:
+          type: string
+        type: array
+      altitude_m:
+        type: integer
+      best_months:
+        items:
+          type: integer
+        type: array
+      categories:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      distance_from_srinagar_km:
+        type: integer
+      district:
+        type: string
+      entry_fee_inr:
+        type: integer
+      features:
+        description: AllTrails-style tags (migration 0010)
+        items:
+          type: string
+        type: array
+      is_featured:
+        type: boolean
+      is_published:
+        type: boolean
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      name_hindi:
+        type: string
+      name_urdu:
+        type: string
+      network_coverage:
+        items:
+          type: integer
+        type: array
+      permits:
+        items:
+          type: string
+        type: array
+      practical:
+        items:
+          type: integer
+        type: array
+      region_slug:
+        type: string
+      season_type:
+        type: string
+      slug:
+        type: string
+      tagline:
+        type: string
+      uniqueness:
+        type: string
+    type: object
+  internal_destination.Category:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_destination.CategoryInput:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_destination.Destination:
+    properties:
+      altitude_m:
+        type: integer
+      best_months:
+        items:
+          type: integer
+        type: array
+      categories:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      distance_from_srinagar_km:
+        type: integer
+      district:
+        type: string
+      entry_fee_inr:
+        type: integer
+      features:
+        items:
+          type: string
+        type: array
+      hero_image_url:
+        type: string
+      id:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      name_hindi:
+        type: string
+      name_urdu:
+        type: string
+      permits:
+        items:
+          type: string
+        type: array
+      rating:
+        type: number
+      review_count:
+        type: integer
+      season_type:
+        type: string
+      slug:
+        type: string
+      tagline:
+        type: string
+      uniqueness:
+        type: string
+    type: object
+  internal_destination.FeaturedDestination:
+    properties:
+      altitude_m:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+      slug:
+        type: string
+      tagline:
+        type: string
+      uniqueness:
+        type: string
+    type: object
+  internal_destination.MapPin:
+    properties:
+      categories:
+        items:
+          type: string
+        type: array
+      hero_image_url:
+        type: string
+      id:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_destination.NearbyDestination:
+    properties:
+      altitude_m:
+        type: integer
+      distance_km:
+        type: number
+      district:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+      slug:
+        type: string
+    type: object
+  internal_destination.Region:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_destination.RegionInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_destination.TrendingDestination:
+    properties:
+      altitude_m:
+        type: integer
+      distance_from_srinagar_km:
+        type: integer
+      district:
+        type: string
+      hero_image_url:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+      slug:
+        type: string
+      tagline:
+        type: string
+      uniqueness:
+        type: string
+    type: object
+  internal_user.Itinerary:
+    properties:
+      created_at:
+        type: string
+      duration:
+        type: integer
+      id:
+        type: string
+      is_public:
+        type: boolean
+      share_token:
+        type: string
+      start_date:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_user.Profile:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  internal_user.SavedDestination:
+    properties:
+      altitude_m:
+        type: integer
+      district:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+      saved_at:
+        type: string
+      slug:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Backend API for the Kashmir Explorer travel app.
+  title: Kashmir Explorer API
+  version: 0.1.0
+paths:
+  /v1/admin/categories:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.CategoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a category (admin)
+      tags:
+      - taxonomy
+  /v1/admin/categories/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a category (admin)
+      tags:
+      - taxonomy
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Category
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.CategoryInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a category (admin)
+      tags:
+      - taxonomy
+  /v1/admin/destinations:
+    get:
+      parameters:
+      - description: published|unpublished|deleted
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.AdminDest'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List destinations (admin, includes unpublished/deleted)
+      tags:
+      - admin-destinations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Destination
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.AdminDestInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a destination (admin)
+      tags:
+      - admin-destinations
+  /v1/admin/destinations/{id}:
+    delete:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Soft-delete a destination (admin)
+      tags:
+      - admin-destinations
+    get:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_destination.AdminDest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Destination detail (admin)
+      tags:
+      - admin-destinations
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Destination
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.AdminDestInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a destination (admin)
+      tags:
+      - admin-destinations
+  /v1/admin/destinations/{id}/permanent:
+    delete:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Permanently delete a destination (admin)
+      tags:
+      - admin-destinations
+  /v1/admin/destinations/{id}/restore:
+    post:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Restore a soft-deleted destination (admin)
+      tags:
+      - admin-destinations
+  /v1/admin/regions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Region
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.RegionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a region (admin)
+      tags:
+      - taxonomy
+  /v1/admin/regions/{id}:
+    delete:
+      parameters:
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a region (admin)
+      tags:
+      - taxonomy
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Region
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_destination.RegionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a region (admin)
+      tags:
+      - taxonomy
+  /v1/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.Category'
+                  type: array
+              type: object
+      summary: List categories
+      tags:
+      - taxonomy
+  /v1/categories/{id}:
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_destination.Category'
+              type: object
+      summary: Category detail (admin)
+      tags:
+      - taxonomy
+  /v1/destinations:
+    get:
+      parameters:
+      - description: Region slug
+        in: query
+        name: region
+        type: string
+      - description: Category slug
+        in: query
+        name: category
+        type: string
+      - description: Page size (default 24, max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.Destination'
+                  type: array
+              type: object
+      summary: List destinations
+      tags:
+      - destinations
+  /v1/destinations/{slug}:
+    get:
+      parameters:
+      - description: Destination slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_destination.Destination'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Destination detail by slug
+      tags:
+      - destinations
+  /v1/destinations/featured:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.FeaturedDestination'
+                  type: array
+              type: object
+      summary: Featured destinations
+      tags:
+      - destinations
+  /v1/destinations/map:
+    get:
+      parameters:
+      - description: minLat,minLng,maxLat,maxLng
+        in: query
+        name: bbox
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.MapPin'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Destination pins within a bounding box
+      tags:
+      - destinations
+  /v1/destinations/nearby:
+    get:
+      parameters:
+      - description: Latitude
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude
+        in: query
+        name: lng
+        required: true
+        type: number
+      - description: Radius in km (default 20)
+        in: query
+        name: radius_km
+        type: number
+      - description: Limit (default 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.NearbyDestination'
+                  type: array
+              type: object
+      summary: Destinations near a point
+      tags:
+      - destinations
+  /v1/destinations/trending:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.TrendingDestination'
+                  type: array
+              type: object
+      summary: Trending destinations
+      tags:
+      - destinations
+  /v1/itineraries:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_user.Itinerary'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List itineraries
+      tags:
+      - user
+    post:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create an itinerary (not yet implemented)
+      tags:
+      - user
+  /v1/itineraries/{id}:
+    delete:
+      parameters:
+      - description: Itinerary ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Delete an itinerary (not yet implemented)
+      tags:
+      - user
+    put:
+      parameters:
+      - description: Itinerary ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update an itinerary (not yet implemented)
+      tags:
+      - user
+  /v1/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_user.Profile'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Current user profile
+      tags:
+      - user
+    patch:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update current user profile (not yet implemented)
+      tags:
+      - user
+  /v1/regions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_destination.Region'
+                  type: array
+              type: object
+      summary: List regions
+      tags:
+      - taxonomy
+  /v1/regions/{id}:
+    get:
+      parameters:
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_destination.Region'
+              type: object
+      summary: Region detail (admin)
+      tags:
+      - taxonomy
+  /v1/saved:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_user.SavedDestination'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List saved destinations
+      tags:
+      - user
+  /v1/saved/{destinationId}:
+    delete:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: destinationId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Remove a saved destination
+      tags:
+      - user
+    post:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: destinationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Save a destination
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
