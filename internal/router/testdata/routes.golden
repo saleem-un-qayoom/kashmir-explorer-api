@@ -9,6 +9,7 @@ DELETE	/v1/admin/destinations/{id}/permanent
 DELETE	/v1/admin/images/{id}
 DELETE	/v1/admin/permits/{id}
 DELETE	/v1/admin/photo-spots/{id}
+DELETE	/v1/admin/providers/{id}
 DELETE	/v1/admin/regions/{id}
 DELETE	/v1/admin/roads/status/{id}
 DELETE	/v1/admin/treks/{id}
@@ -94,6 +95,7 @@ POST	/v1/admin/destinations/{id}/restore
 POST	/v1/admin/images
 POST	/v1/admin/permits
 POST	/v1/admin/photo-spots
+POST	/v1/admin/providers
 POST	/v1/admin/providers/{id}/verify
 POST	/v1/admin/regions
 POST	/v1/admin/reindex
@@ -133,6 +135,7 @@ PUT	/v1/admin/destinations/{id}
 PUT	/v1/admin/images/{id}
 PUT	/v1/admin/permits/{id}
 PUT	/v1/admin/photo-spots/{id}
+PUT	/v1/admin/providers/{id}
 PUT	/v1/admin/regions/{id}
 PUT	/v1/admin/roads/status/{id}
 PUT	/v1/admin/roads/{id}/status

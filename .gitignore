@@ -1,1 +1,23 @@
+# IDE
 .idea
+.vscode
+
+# Compiled server binary (build artifact)
+/main
+main
+
+# Air live-reload build output
+tmp/
+
+# Test / coverage output
+*.out
+coverage.txt
+coverage.html
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store

@@ -329,6 +329,9 @@ func registerAdmin(r chi.Router, d Deps) {
 		r.Delete("/images/{id}", d.Image.AdminDelete)
 
 		// Providers
+		r.Post("/providers", d.Provider.AdminCreate)
+		r.Put("/providers/{id}", d.Provider.AdminUpdate)
+		r.Delete("/providers/{id}", d.Provider.AdminDelete)
 		r.Post("/providers/{id}/verify", d.Provider.AdminVerify)
 
 		// Legacy: POST /admin/cultural (generic type body)
