@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kashmir-explorer/api/internal/advisory"
@@ -103,6 +104,10 @@ func New(d Deps) http.Handler {
 	registerDocs(r)
 
 	r.Route("/v1", func(r chi.Router) {
+		// Per-IP backstop across the whole API surface (DoS / runaway clients).
+		// In-memory, so the limit is per-machine; a distributed limiter (Redis)
+		// would be the next step once REDIS_URL is wired.
+		r.Use(httprate.LimitByIP(300, time.Minute))
 		registerPublic(r, d)
 		registerAuthed(r, d)
 		registerAdmin(r, d)
@@ -146,7 +151,11 @@ func registerWebsockets(r chi.Router, d Deps) {
 
 func registerPublic(r chi.Router, d Deps) {
 	r.Route("/auth", func(r chi.Router) {
-		r.Post("/phone/start", d.Auth.PhoneStart)
+		// Auth is the prime abuse target: credential stuffing + (via phone/start)
+		// real SMS cost. Group limit guards the whole flow; phone/start is tighter
+		// still since each call can send a paid SMS.
+		r.Use(httprate.LimitByIP(30, time.Minute))
+		r.With(httprate.LimitByIP(5, time.Minute)).Post("/phone/start", d.Auth.PhoneStart)
 		r.Post("/phone/verify", d.Auth.PhoneVerify)
 		r.Post("/google", d.Auth.Google)
 		r.Post("/apple", d.Auth.Apple)
@@ -169,8 +178,8 @@ func registerPublic(r chi.Router, d Deps) {
 	// V3 · public share-link viewer (no auth)
 	r.Get("/tracks/share/{token}", d.TrekV3.ShareTrack)
 
-	// Semantic search (public).
-	r.Get("/search", d.Search.Search)
+	// Semantic search (public) — hits pgvector + embeddings, so rate-limit it.
+	r.With(httprate.LimitByIP(60, time.Minute)).Get("/search", d.Search.Search)
 
 	r.Route("/advisories", func(r chi.Router) {
 		r.Get("/", d.Advisory.List)
@@ -209,6 +218,8 @@ func registerPublic(r chi.Router, d Deps) {
 	})
 
 	r.Route("/ai", func(r chi.Router) {
+		// LLM calls are the most expensive endpoints we have — keep them tight.
+		r.Use(httprate.LimitByIP(20, time.Minute))
 		r.Post("/plan-trip", d.AI.PlanTrip)
 		r.Post("/ask", d.AI.Ask)                      // streaming SSE
 		r.Post("/identify-place", d.AI.IdentifyPlace) // photo → destination

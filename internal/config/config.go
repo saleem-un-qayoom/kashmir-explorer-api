@@ -112,8 +112,11 @@ func Load() (*Config, error) {
 	if cfg.JWT.Secret == "" {
 		return nil, errors.New("JWT_SECRET is required")
 	}
-	if cfg.Env == "production" && cfg.OTP.DevBypass {
-		return nil, fmt.Errorf("OTP_DEV_BYPASS must be false in production")
+	// The dev OTP bypass (accepts code 000000) is a development-only escape hatch.
+	// Honour it *only* when ENV=development so it can never leak into staging or
+	// production, even if the flag is set by mistake.
+	if cfg.OTP.DevBypass && cfg.Env != "development" {
+		return nil, fmt.Errorf("OTP_DEV_BYPASS may only be enabled when ENV=development (got %q)", cfg.Env)
 	}
 	return cfg, nil
 }
