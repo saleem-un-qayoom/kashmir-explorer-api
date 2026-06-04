@@ -50,6 +50,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/review"
 	"github.com/kashmir-explorer/api/internal/router"
 	"github.com/kashmir-explorer/api/internal/search"
+	"github.com/kashmir-explorer/api/internal/social"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
 	"github.com/kashmir-explorer/api/internal/trek"
@@ -158,6 +159,7 @@ func main() {
 		Image:        image.NewService(pool),
 		Report:       report.NewService(pool),
 		Review:       review.NewService(pool),
+		Social:       social.NewService(pool),
 		Wallet:       wallet.NewService(pool, cfg.ApplePassTypeID, cfg.OAuth.AppleTeamID),
 		Subscription: subscription.NewService(pool, cfg.Razorpay),
 	}

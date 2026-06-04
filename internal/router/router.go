@@ -39,6 +39,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/report"
 	"github.com/kashmir-explorer/api/internal/review"
 	"github.com/kashmir-explorer/api/internal/search"
+	"github.com/kashmir-explorer/api/internal/social"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
 	"github.com/kashmir-explorer/api/internal/trek"
@@ -84,6 +85,7 @@ type Deps struct {
 	Image        *image.Service
 	Report       *report.Service
 	Review       *review.Service
+	Social       *social.Service
 	Wallet       *wallet.Service
 	Subscription *subscription.Service
 }
@@ -185,6 +187,13 @@ func registerPublic(r chi.Router, d Deps) {
 	// Semantic search (public) — hits pgvector + embeddings, so rate-limit it.
 	r.With(httprate.LimitByIP(60, time.Minute)).Get("/search", d.Search.Search)
 
+	// Public profiles + follower lists (social graph).
+	r.Route("/users", func(r chi.Router) {
+		r.Get("/{id}", d.Social.Profile)
+		r.Get("/{id}/followers", d.Social.Followers)
+		r.Get("/{id}/following", d.Social.Following)
+	})
+
 	r.Route("/advisories", func(r chi.Router) {
 		r.Get("/", d.Advisory.List)
 		r.Get("/destination/{id}", d.Advisory.ForDestination)
@@ -260,6 +269,11 @@ func registerAuthed(r chi.Router, d Deps) {
 		r.Post("/treks/{slug}/reviews", d.Review.CreateForTrek)
 		r.Get("/me/reviews", d.Review.Mine)
 		r.Delete("/reviews/{id}", d.Review.Delete)
+
+		// Social graph: follow/unfollow + activity feed.
+		r.Post("/users/{id}/follow", d.Social.Follow)
+		r.Delete("/users/{id}/follow", d.Social.Unfollow)
+		r.Get("/me/feed", d.Social.Feed)
 
 		// V3 · tracks + summit log
 		r.Post("/tracks", d.TrekV3.CreateTrack)

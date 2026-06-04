@@ -1025,6 +1025,58 @@ definitions:
       vector_hit:
         type: boolean
     type: object
+  internal_social.FeedItem:
+    properties:
+      avatar_url:
+        type: string
+      body:
+        type: string
+      created_at:
+        type: string
+      rating:
+        type: integer
+      target_name:
+        type: string
+      target_slug:
+        type: string
+      target_type:
+        type: string
+      type:
+        description: '''review'' | ''completion'''
+        type: string
+      user_id:
+        type: string
+      user_name:
+        type: string
+    type: object
+  internal_social.Profile:
+    properties:
+      avatar_url:
+        type: string
+      completions:
+        type: integer
+      followers:
+        type: integer
+      following:
+        type: integer
+      id:
+        type: string
+      joined_at:
+        type: string
+      name:
+        type: string
+      reviews:
+        type: integer
+    type: object
+  internal_social.UserCard:
+    properties:
+      avatar_url:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   internal_subscription.SubscribeInput:
     properties:
       plan:
@@ -3858,6 +3910,27 @@ paths:
       summary: My summit log (completed treks)
       tags:
       - tracks
+  /v1/me/feed:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_social.FeedItem'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Activity feed — reviews & completions from people you follow
+      tags:
+      - social
   /v1/me/reviews:
     get:
       produces:
@@ -4626,6 +4699,118 @@ paths:
       summary: Get a presigned R2 upload URL
       tags:
       - upload
+  /v1/users/{id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_social.Profile'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Public profile (name, avatar, aggregate counts)
+      tags:
+      - social
+  /v1/users/{id}/follow:
+    delete:
+      parameters:
+      - description: User ID to unfollow
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Unfollow a user
+      tags:
+      - social
+    post:
+      parameters:
+      - description: User ID to follow
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Follow a user
+      tags:
+      - social
+  /v1/users/{id}/followers:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_social.UserCard'
+                  type: array
+              type: object
+      summary: Users who follow this user
+      tags:
+      - social
+  /v1/users/{id}/following:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_social.UserCard'
+                  type: array
+              type: object
+      summary: Users this user follows
+      tags:
+      - social
   /v1/weather/destination/{slug}:
     get:
       parameters:

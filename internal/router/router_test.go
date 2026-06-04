@@ -27,6 +27,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/report"
 	"github.com/kashmir-explorer/api/internal/review"
 	"github.com/kashmir-explorer/api/internal/search"
+	"github.com/kashmir-explorer/api/internal/social"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
 	"github.com/kashmir-explorer/api/internal/trek"
@@ -72,6 +73,7 @@ func testDeps() Deps {
 		Image:        image.NewService(nil),
 		Report:       report.NewService(nil),
 		Review:       review.NewService(nil),
+		Social:       social.NewService(nil),
 		Wallet:       wallet.NewService(nil, "", ""),
 		Subscription: subscription.NewService(nil, cfg.Razorpay),
 	}

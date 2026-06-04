@@ -18,6 +18,7 @@ DELETE	/v1/groups/{code}/leave
 DELETE	/v1/itineraries/{id}
 DELETE	/v1/reviews/{id}
 DELETE	/v1/saved/{destinationId}
+DELETE	/v1/users/{id}/follow
 GET	/healthz
 GET	/readyz
 GET	/swagger/*
@@ -64,6 +65,7 @@ GET	/v1/images/trek/{id}
 GET	/v1/itineraries/
 GET	/v1/me
 GET	/v1/me/completions
+GET	/v1/me/feed
 GET	/v1/me/reviews
 GET	/v1/me/subscription
 GET	/v1/me/tracks
@@ -85,6 +87,9 @@ GET	/v1/treks/{slug}/density
 GET	/v1/treks/{slug}/path
 GET	/v1/treks/{slug}/reports
 GET	/v1/treks/{slug}/reviews
+GET	/v1/users/{id}
+GET	/v1/users/{id}/followers
+GET	/v1/users/{id}/following
 GET	/v1/weather/destination/{slug}
 GET	/ws/advisories
 GET	/ws/crowd/{slug}
@@ -132,6 +137,7 @@ POST	/v1/treks/{slug}/ping
 POST	/v1/treks/{slug}/report
 POST	/v1/treks/{slug}/reviews
 POST	/v1/upload/presign
+POST	/v1/users/{id}/follow
 POST	/v1/webhooks/razorpay
 PUT	/v1/admin/advisories/{id}
 PUT	/v1/admin/categories/{id}
