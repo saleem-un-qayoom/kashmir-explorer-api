@@ -194,7 +194,32 @@ func (s *Service) Etiquette(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// POST /v1/admin/cultural — admin create.
+// Cultural admin doc-models (OpenAPI/codegen).
+type CulturalItem struct {
+	ID          string          `json:"id"`
+	Type        string          `json:"type"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Details     json.RawMessage `json:"details"`
+	NameLocal   json.RawMessage `json:"name_local"`
+}
+type CulturalInput struct {
+	Type        string          `json:"type,omitempty"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Details     json.RawMessage `json:"details"`
+	NameLocal   json.RawMessage `json:"name_local"`
+}
+
+// AdminCreate godoc
+// @Summary  Create a cultural item (admin, generic)
+// @Tags     admin-cultural
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body cultural.CulturalInput true "Cultural item"
+// @Success  201 {object} response.Envelope
+// @Router   /v1/admin/cultural [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Type        string          `json:"type"`
@@ -219,6 +244,16 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 
 // ─── Admin CRUD ────────────────────────────────────────────────
 
+// AdminGet godoc
+// @Summary  Get a cultural item by ID (per type)
+// @Tags     cultural
+// @Produce  json
+// @Param    id path string true "Item ID"
+// @Success  200 {object} response.Envelope{data=cultural.CulturalItem}
+// @Router   /v1/cultural/food/{id} [get]
+// @Router   /v1/cultural/festivals/{id} [get]
+// @Router   /v1/cultural/crafts/{id} [get]
+// @Router   /v1/cultural/etiquette/{id} [get]
 func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var item struct {
@@ -267,6 +302,19 @@ func (s *Service) AdminCreateFor(ctype string) http.HandlerFunc {
 	}
 }
 
+// AdminUpdate godoc
+// @Summary  Update a cultural item (admin, per type)
+// @Tags     admin-cultural
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string              true "Item ID"
+// @Param    body body cultural.CulturalInput true "Cultural item"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/cultural/food/{id} [put]
+// @Router   /v1/admin/cultural/festivals/{id} [put]
+// @Router   /v1/admin/cultural/crafts/{id} [put]
+// @Router   /v1/admin/cultural/etiquette/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var body struct {
@@ -290,6 +338,16 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
+// AdminDelete godoc
+// @Summary  Delete a cultural item (admin, per type)
+// @Tags     admin-cultural
+// @Security BearerAuth
+// @Param    id path string true "Item ID"
+// @Success  204
+// @Router   /v1/admin/cultural/food/{id} [delete]
+// @Router   /v1/admin/cultural/festivals/{id} [delete]
+// @Router   /v1/admin/cultural/crafts/{id} [delete]
+// @Router   /v1/admin/cultural/etiquette/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM cultural_items WHERE id = $1`, id)

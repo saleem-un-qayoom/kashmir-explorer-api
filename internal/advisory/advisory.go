@@ -246,6 +246,32 @@ func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	response.NoContent(w)
 }
 
+// Road doc-models (OpenAPI/codegen).
+type RoadStatusItem struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	Slug          string  `json:"slug"`
+	Status        string  `json:"status"`
+	ClosureReason *string `json:"closure_reason,omitempty"`
+	LastChecked   string  `json:"last_checked"`
+}
+type RoadInput struct {
+	Name          string  `json:"name"`
+	Slug          string  `json:"slug"`
+	Status        string  `json:"status"`
+	ClosureReason *string `json:"closure_reason"`
+}
+
+// AdminUpdateRoad godoc
+// @Summary  Update a road's status (legacy route)
+// @Tags     admin-roads
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string           true "Road ID"
+// @Param    body body advisory.RoadInput true "Status"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/roads/{id}/status [put]
 func (s *Service) AdminUpdateRoad(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var body struct {
@@ -269,6 +295,14 @@ func (s *Service) AdminUpdateRoad(w http.ResponseWriter, r *http.Request) {
 
 // ─── Admin: Roads CRUD (route-aligned) ─────────────────────────
 
+// AdminRoadGet godoc
+// @Summary  Get a road/pass status
+// @Tags     admin-roads
+// @Produce  json
+// @Param    id path string true "Road ID"
+// @Success  200 {object} response.Envelope{data=advisory.RoadStatusItem}
+// @Router   /v1/roads/status/{id} [get]
+// @Router   /v1/admin/roads/status/{id} [get]
 func (s *Service) AdminRoadGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var road struct {
@@ -290,6 +324,15 @@ func (s *Service) AdminRoadGet(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, road)
 }
 
+// AdminRoadCreate godoc
+// @Summary  Create a road/pass status (admin)
+// @Tags     admin-roads
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body advisory.RoadInput true "Road"
+// @Success  201 {object} response.Envelope
+// @Router   /v1/admin/roads/status [post]
 func (s *Service) AdminRoadCreate(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Name          string  `json:"name"`
@@ -317,6 +360,16 @@ func (s *Service) AdminRoadCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
+// AdminRoadUpdate godoc
+// @Summary  Update a road/pass status (admin)
+// @Tags     admin-roads
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string           true "Road ID"
+// @Param    body body advisory.RoadInput true "Road"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/roads/status/{id} [put]
 func (s *Service) AdminRoadUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in struct {
@@ -340,6 +393,13 @@ func (s *Service) AdminRoadUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
+// AdminRoadDelete godoc
+// @Summary  Delete a road/pass status (admin)
+// @Tags     admin-roads
+// @Security BearerAuth
+// @Param    id path string true "Road ID"
+// @Success  204
+// @Router   /v1/admin/roads/status/{id} [delete]
 func (s *Service) AdminRoadDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM roads WHERE id = $1`, id)

@@ -51,6 +51,32 @@ definitions:
       valid_until:
         type: string
     type: object
+  internal_advisory.RoadInput:
+    properties:
+      closure_reason:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_advisory.RoadStatusItem:
+    properties:
+      closure_reason:
+        type: string
+      id:
+        type: string
+      last_checked:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+    type: object
   internal_ai.AskInput:
     properties:
       destination_id:
@@ -220,6 +246,42 @@ definitions:
       origin:
         type: string
       price:
+        type: string
+    type: object
+  internal_cultural.CulturalInput:
+    properties:
+      description:
+        type: string
+      details:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      name_local:
+        items:
+          type: integer
+        type: array
+      type:
+        type: string
+    type: object
+  internal_cultural.CulturalItem:
+    properties:
+      description:
+        type: string
+      details:
+        items:
+          type: integer
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      name_local:
+        items:
+          type: integer
+        type: array
+      type:
         type: string
     type: object
   internal_cultural.Dish:
@@ -1440,6 +1502,201 @@ paths:
       summary: Update a category (admin)
       tags:
       - taxonomy
+  /v1/admin/cultural:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cultural item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_cultural.CulturalInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a cultural item (admin, generic)
+      tags:
+      - admin-cultural
+  /v1/admin/cultural/crafts/{id}:
+    delete:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cultural item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_cultural.CulturalInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+  /v1/admin/cultural/etiquette/{id}:
+    delete:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cultural item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_cultural.CulturalInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+  /v1/admin/cultural/festivals/{id}:
+    delete:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cultural item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_cultural.CulturalInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+  /v1/admin/cultural/food/{id}:
+    delete:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a cultural item (admin, per type)
+      tags:
+      - admin-cultural
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cultural item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_cultural.CulturalInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a cultural item (admin, per type)
+      tags:
+      - admin-cultural
   /v1/admin/destinations:
     get:
       parameters:
@@ -2113,6 +2370,122 @@ paths:
       summary: Resolve or dismiss a report (admin)
       tags:
       - admin-reports
+  /v1/admin/roads/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Road ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_advisory.RoadInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a road's status (legacy route)
+      tags:
+      - admin-roads
+  /v1/admin/roads/status:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Road
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_advisory.RoadInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a road/pass status (admin)
+      tags:
+      - admin-roads
+  /v1/admin/roads/status/{id}:
+    delete:
+      parameters:
+      - description: Road ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a road/pass status (admin)
+      tags:
+      - admin-roads
+    get:
+      parameters:
+      - description: Road ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_advisory.RoadStatusItem'
+              type: object
+      summary: Get a road/pass status
+      tags:
+      - admin-roads
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Road ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Road
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_advisory.RoadInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a road/pass status (admin)
+      tags:
+      - admin-roads
   /v1/admin/tracks:
     get:
       produces:
@@ -2711,6 +3084,29 @@ paths:
       summary: List handicrafts
       tags:
       - cultural
+  /v1/cultural/crafts/{id}:
+    get:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_cultural.CulturalItem'
+              type: object
+      summary: Get a cultural item by ID (per type)
+      tags:
+      - cultural
   /v1/cultural/etiquette:
     get:
       produces:
@@ -2728,6 +3124,29 @@ paths:
                   type: array
               type: object
       summary: List etiquette tips
+      tags:
+      - cultural
+  /v1/cultural/etiquette/{id}:
+    get:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_cultural.CulturalItem'
+              type: object
+      summary: Get a cultural item by ID (per type)
       tags:
       - cultural
   /v1/cultural/festivals:
@@ -2749,6 +3168,29 @@ paths:
       summary: List festivals
       tags:
       - cultural
+  /v1/cultural/festivals/{id}:
+    get:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_cultural.CulturalItem'
+              type: object
+      summary: Get a cultural item by ID (per type)
+      tags:
+      - cultural
   /v1/cultural/food:
     get:
       produces:
@@ -2766,6 +3208,29 @@ paths:
                   type: array
               type: object
       summary: List Wazwan dishes
+      tags:
+      - cultural
+  /v1/cultural/food/{id}:
+    get:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_cultural.CulturalItem'
+              type: object
+      summary: Get a cultural item by ID (per type)
       tags:
       - cultural
   /v1/destinations:
@@ -3481,6 +3946,29 @@ paths:
       summary: List road / mountain-pass statuses
       tags:
       - advisories
+  /v1/roads/status/{id}:
+    get:
+      parameters:
+      - description: Road ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_advisory.RoadStatusItem'
+              type: object
+      summary: Get a road/pass status
+      tags:
+      - admin-roads
   /v1/saved:
     get:
       produces:
