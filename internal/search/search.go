@@ -40,7 +40,25 @@ type Result struct {
 	Days       *int    `json:"days,omitempty"`
 }
 
-// GET /v1/search?q=...&region=...&max_alt=...&permit_ok=...&limit=...
+// SearchResponse is the search payload (OpenAPI/codegen model).
+type SearchResponse struct {
+	Query     string   `json:"query"`
+	Results   []Result `json:"results"`
+	VectorHit bool     `json:"vector_hit"`
+}
+
+// Search godoc
+// @Summary  Hybrid semantic + fuzzy search (destinations + treks)
+// @Tags     search
+// @Produce  json
+// @Param    q         query string true  "Query text"
+// @Param    region    query string false "Region slug filter"
+// @Param    max_alt   query int    false "Max altitude (m) filter"
+// @Param    permit_ok query bool   false "Include permit-required results (default true)"
+// @Param    limit     query int    false "Max results (default 20, max 50)"
+// @Success  200 {object} response.Envelope{data=search.SearchResponse}
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/search [get]
 func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	query := strings.TrimSpace(q.Get("q"))
@@ -143,7 +161,13 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 
 /* ─── Reindex job ───────────────────────────────────────── */
 
-// POST /v1/admin/reindex — admin-only. Embeds rows missing a vector.
+// Reindex godoc
+// @Summary  Re-embed rows missing a vector (admin)
+// @Tags     admin-search
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/reindex [post]
 func (s *Service) Reindex(w http.ResponseWriter, r *http.Request) {
 	dests, err := s.indexBatch(r.Context(), "destinations", `
 		SELECT id::text, name || ' · ' || COALESCE(district, '') || ' · ' ||

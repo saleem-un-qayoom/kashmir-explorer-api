@@ -51,6 +51,74 @@ definitions:
       valid_until:
         type: string
     type: object
+  internal_booking.Booking:
+    properties:
+      base_inr:
+        type: integer
+      end_date:
+        type: string
+      fee_inr:
+        type: integer
+      gst_inr:
+        type: integer
+      guests:
+        type: integer
+      id:
+        type: string
+      notes:
+        type: string
+      provider:
+        $ref: '#/definitions/internal_booking.BookingProvider'
+      ref:
+        type: string
+      start_date:
+        type: string
+      status:
+        type: string
+      total_inr:
+        type: integer
+      type:
+        type: string
+    type: object
+  internal_booking.BookingInput:
+    properties:
+      end_date:
+        type: string
+      guests:
+        type: integer
+      notes:
+        type: string
+      provider_id:
+        type: string
+      start_date:
+        type: string
+    type: object
+  internal_booking.BookingOrder:
+    properties:
+      breakdown:
+        additionalProperties:
+          type: integer
+        type: object
+      id:
+        type: string
+      razorpay_key_id:
+        type: string
+      razorpay_order_id:
+        type: string
+      ref:
+        type: string
+      total_inr:
+        type: integer
+    type: object
+  internal_booking.BookingProvider:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      type:
+        type: string
+    type: object
   internal_cultural.Craft:
     properties:
       description:
@@ -508,6 +576,50 @@ definitions:
       validity:
         type: string
     type: object
+  internal_photo.PhotoSpot:
+    properties:
+      best_time:
+        type: string
+      description:
+        type: string
+      destination_slug:
+        type: string
+      drone_allowed:
+        type: boolean
+      facing:
+        type: string
+      id:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      tripod_recommended:
+        type: boolean
+    type: object
+  internal_photo.PhotoSpotInput:
+    properties:
+      best_time:
+        type: string
+      description:
+        type: string
+      destination_slug:
+        type: string
+      drone_allowed:
+        type: boolean
+      facing:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      tripod_recommended:
+        type: boolean
+    type: object
   internal_provider.Provider:
     properties:
       amenities:
@@ -595,6 +707,41 @@ definitions:
         type: string
       years_hosting:
         type: integer
+    type: object
+  internal_search.Result:
+    properties:
+      altitude_m:
+        type: integer
+      days:
+        type: integer
+      difficulty:
+        type: string
+      district:
+        type: string
+      id:
+        type: string
+      kind:
+        description: '''destination'' | ''trek'''
+        type: string
+      name:
+        type: string
+      score:
+        type: number
+      slug:
+        type: string
+      tagline:
+        type: string
+    type: object
+  internal_search.SearchResponse:
+    properties:
+      query:
+        type: string
+      results:
+        items:
+          $ref: '#/definitions/internal_search.Result'
+        type: array
+      vector_hit:
+        type: boolean
     type: object
   internal_trek.AdminTrek:
     properties:
@@ -1302,6 +1449,120 @@ paths:
       summary: Update a permit (admin)
       tags:
       - admin-permits
+  /v1/admin/photo-spots:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_photo.PhotoSpot'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all photo spots (admin)
+      tags:
+      - admin-photo-spots
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Photo spot
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_photo.PhotoSpotInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a photo spot (admin)
+      tags:
+      - admin-photo-spots
+  /v1/admin/photo-spots/{id}:
+    delete:
+      parameters:
+      - description: Photo spot ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a photo spot (admin)
+      tags:
+      - admin-photo-spots
+    get:
+      parameters:
+      - description: Photo spot ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_photo.PhotoSpot'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a photo spot (admin)
+      tags:
+      - admin-photo-spots
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Photo spot ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Photo spot
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_photo.PhotoSpotInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a photo spot (admin)
+      tags:
+      - admin-photo-spots
   /v1/admin/providers:
     post:
       consumes:
@@ -1466,6 +1727,20 @@ paths:
       summary: Update a region (admin)
       tags:
       - taxonomy
+  /v1/admin/reindex:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Re-embed rows missing a vector (admin)
+      tags:
+      - admin-search
   /v1/admin/treks:
     get:
       produces:
@@ -1637,6 +1912,107 @@ paths:
       summary: List advisories affecting a destination
       tags:
       - advisories
+  /v1/bookings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_booking.Booking'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List the current user's bookings
+      tags:
+      - bookings
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_booking.BookingInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_booking.BookingOrder'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a booking + Razorpay order
+      tags:
+      - bookings
+  /v1/bookings/{id}:
+    get:
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_booking.Booking'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get a booking
+      tags:
+      - bookings
+  /v1/bookings/{id}/cancel:
+    post:
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Cancel a booking
+      tags:
+      - bookings
   /v1/categories:
     get:
       produces:
@@ -1818,6 +2194,31 @@ paths:
       summary: Destination detail by slug
       tags:
       - destinations
+  /v1/destinations/{slug}/photo-spots:
+    get:
+      parameters:
+      - description: Destination slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_photo.PhotoSpot'
+                  type: array
+              type: object
+      summary: Photo spots near a destination
+      tags:
+      - photo-spots
   /v1/destinations/featured:
     get:
       produces:
@@ -2289,6 +2690,49 @@ paths:
       summary: Save a destination
       tags:
       - user
+  /v1/search:
+    get:
+      parameters:
+      - description: Query text
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Region slug filter
+        in: query
+        name: region
+        type: string
+      - description: Max altitude (m) filter
+        in: query
+        name: max_alt
+        type: integer
+      - description: Include permit-required results (default true)
+        in: query
+        name: permit_ok
+        type: boolean
+      - description: Max results (default 20, max 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_search.SearchResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Hybrid semantic + fuzzy search (destinations + treks)
+      tags:
+      - search
   /v1/treks:
     get:
       parameters:
@@ -2397,6 +2841,22 @@ paths:
       summary: Current weather for a destination
       tags:
       - weather
+  /v1/webhooks/razorpay:
+    post:
+      consumes:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Razorpay payment webhook (HMAC-verified)
+      tags:
+      - webhooks
 securityDefinitions:
   BearerAuth:
     in: header

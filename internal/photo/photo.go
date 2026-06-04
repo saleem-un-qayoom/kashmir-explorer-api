@@ -14,7 +14,40 @@ type Service struct{ pool *pgxpool.Pool }
 
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
-// GET /v1/destinations/{slug}/photo-spots
+// PhotoSpot / PhotoSpotInput are OpenAPI/codegen models; handlers emit/accept
+// these fields (the implementation uses inline maps/structs).
+type PhotoSpot struct {
+	ID                string  `json:"id"`
+	Name              string  `json:"name"`
+	DestinationSlug   string  `json:"destination_slug,omitempty"`
+	Lat               float64 `json:"lat"`
+	Lng               float64 `json:"lng"`
+	BestTime          string  `json:"best_time"`
+	Facing            string  `json:"facing"`
+	TripodRecommended bool    `json:"tripod_recommended"`
+	DroneAllowed      bool    `json:"drone_allowed"`
+	Description       string  `json:"description"`
+}
+
+type PhotoSpotInput struct {
+	DestinationSlug   string  `json:"destination_slug"`
+	Name              string  `json:"name"`
+	Lat               float64 `json:"lat"`
+	Lng               float64 `json:"lng"`
+	BestTime          string  `json:"best_time"`
+	Facing            string  `json:"facing"`
+	TripodRecommended bool    `json:"tripod_recommended"`
+	DroneAllowed      bool    `json:"drone_allowed"`
+	Description       string  `json:"description"`
+}
+
+// ForDestination godoc
+// @Summary  Photo spots near a destination
+// @Tags     photo-spots
+// @Produce  json
+// @Param    slug path string true "Destination slug"
+// @Success  200 {object} response.Envelope{data=[]photo.PhotoSpot}
+// @Router   /v1/destinations/{slug}/photo-spots [get]
 func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	rows, err := s.pool.Query(r.Context(), `
@@ -57,6 +90,13 @@ func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 
 // ─── Admin CRUD ────────────────────────────────────────────────
 
+// AdminList godoc
+// @Summary  List all photo spots (admin)
+// @Tags     admin-photo-spots
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]photo.PhotoSpot}
+// @Router   /v1/admin/photo-spots [get]
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT ps.id::text, ps.name, d.slug,
@@ -101,6 +141,14 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
+// AdminGet godoc
+// @Summary  Get a photo spot (admin)
+// @Tags     admin-photo-spots
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Photo spot ID"
+// @Success  200 {object} response.Envelope{data=photo.PhotoSpot}
+// @Router   /v1/admin/photo-spots/{id} [get]
 func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var p struct {
@@ -137,6 +185,16 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, p)
 }
 
+// AdminCreate godoc
+// @Summary  Create a photo spot (admin)
+// @Tags     admin-photo-spots
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body photo.PhotoSpotInput true "Photo spot"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/photo-spots [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		DestinationSlug string  `json:"destination_slug"`
@@ -174,6 +232,16 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
+// AdminUpdate godoc
+// @Summary  Update a photo spot (admin)
+// @Tags     admin-photo-spots
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string               true "Photo spot ID"
+// @Param    body body photo.PhotoSpotInput true "Photo spot"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/photo-spots/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in struct {
@@ -208,6 +276,13 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
+// AdminDelete godoc
+// @Summary  Delete a photo spot (admin)
+// @Tags     admin-photo-spots
+// @Security BearerAuth
+// @Param    id path string true "Photo spot ID"
+// @Success  204
+// @Router   /v1/admin/photo-spots/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM photo_spots WHERE id = $1`, id)

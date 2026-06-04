@@ -30,7 +30,7 @@ func NewService(pool *pgxpool.Pool, cfg config.RazorpayConfig) *Service {
 	}
 }
 
-type createReq struct {
+type BookingInput struct {
 	ProviderID string `json:"provider_id"`
 	StartDate  string `json:"start_date"`
 	EndDate    string `json:"end_date,omitempty"`
@@ -38,10 +38,52 @@ type createReq struct {
 	Notes      string `json:"notes,omitempty"`
 }
 
-// POST /v1/bookings — create booking + Razorpay order in one round-trip.
+// Booking / response doc-models (OpenAPI/codegen; handlers emit these fields).
+type BookingProvider struct {
+	Name  string  `json:"name"`
+	Type  string  `json:"type"`
+	Phone *string `json:"phone,omitempty"`
+}
+
+type Booking struct {
+	ID        string          `json:"id"`
+	Ref       string          `json:"ref"`
+	StartDate string          `json:"start_date"`
+	EndDate   string          `json:"end_date"`
+	Guests    int             `json:"guests"`
+	BaseINR   int             `json:"base_inr,omitempty"`
+	GstINR    int             `json:"gst_inr,omitempty"`
+	FeeINR    int             `json:"fee_inr,omitempty"`
+	TotalINR  int             `json:"total_inr"`
+	Status    string          `json:"status"`
+	Notes     *string         `json:"notes,omitempty"`
+	Type      string          `json:"type,omitempty"`
+	Provider  BookingProvider `json:"provider"`
+}
+
+// BookingOrder is the create response: a booking plus its Razorpay order handle.
+type BookingOrder struct {
+	ID              string         `json:"id"`
+	Ref             string         `json:"ref"`
+	RazorpayOrderID string         `json:"razorpay_order_id"`
+	RazorpayKeyID   string         `json:"razorpay_key_id"`
+	TotalINR        int            `json:"total_inr"`
+	Breakdown       map[string]int `json:"breakdown"`
+}
+
+// Create godoc
+// @Summary  Create a booking + Razorpay order
+// @Tags     bookings
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body booking.BookingInput true "Booking request"
+// @Success  201 {object} response.Envelope{data=booking.BookingOrder}
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/bookings [post]
 func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
-	var body createReq
+	var body BookingInput
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -120,7 +162,13 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /v1/bookings
+// List godoc
+// @Summary  List the current user's bookings
+// @Tags     bookings
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]booking.Booking}
+// @Router   /v1/bookings [get]
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	rows, err := s.pool.Query(r.Context(), `
@@ -157,7 +205,15 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/bookings/{id}
+// Get godoc
+// @Summary  Get a booking
+// @Tags     bookings
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Booking ID"
+// @Success  200 {object} response.Envelope{data=booking.Booking}
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/bookings/{id} [get]
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := mw.UserID(r)
@@ -189,7 +245,14 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /v1/bookings/{id}/cancel
+// Cancel godoc
+// @Summary  Cancel a booking
+// @Tags     bookings
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Booking ID"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/bookings/{id}/cancel [post]
 func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := mw.UserID(r)
@@ -203,7 +266,13 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"status": "cancelled"})
 }
 
-// POST /v1/webhooks/razorpay — verify HMAC + flip to confirmed.
+// RazorpayWebhook godoc
+// @Summary  Razorpay payment webhook (HMAC-verified)
+// @Tags     webhooks
+// @Accept   json
+// @Success  200 {string} string "ok"
+// @Failure  401 {object} response.Envelope
+// @Router   /v1/webhooks/razorpay [post]
 func (s *Service) RazorpayWebhook(w http.ResponseWriter, r *http.Request) {
 	sig := r.Header.Get("X-Razorpay-Signature")
 	body, err := io.ReadAll(r.Body)

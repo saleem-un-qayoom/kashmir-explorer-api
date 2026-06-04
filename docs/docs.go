@@ -794,6 +794,200 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/admin/photo-spots": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-photo-spots"
+                ],
+                "summary": "List all photo spots (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_photo.PhotoSpot"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-photo-spots"
+                ],
+                "summary": "Create a photo spot (admin)",
+                "parameters": [
+                    {
+                        "description": "Photo spot",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_photo.PhotoSpotInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/photo-spots/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-photo-spots"
+                ],
+                "summary": "Get a photo spot (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Photo spot ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_photo.PhotoSpot"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-photo-spots"
+                ],
+                "summary": "Update a photo spot (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Photo spot ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Photo spot",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_photo.PhotoSpotInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-photo-spots"
+                ],
+                "summary": "Delete a photo spot (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Photo spot ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/v1/admin/providers": {
             "post": {
                 "security": [
@@ -1057,6 +1251,30 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/admin/reindex": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-search"
+                ],
+                "summary": "Re-embed rows missing a vector (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
                     }
                 }
             }
@@ -1347,6 +1565,183 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bookings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "List the current user's bookings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_booking.Booking"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Create a booking + Razorpay order",
+                "parameters": [
+                    {
+                        "description": "Booking request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_booking.BookingInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_booking.BookingOrder"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bookings/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Get a booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_booking.Booking"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/bookings/{id}/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Cancel a booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
                     }
                 }
@@ -1842,6 +2237,49 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/destinations/{slug}/photo-spots": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "photo-spots"
+                ],
+                "summary": "Photo spots near a destination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Destination slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_photo.PhotoSpot"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -2480,6 +2918,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/search": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Hybrid semantic + fuzzy search (destinations + treks)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Query text",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Region slug filter",
+                        "name": "region",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max altitude (m) filter",
+                        "name": "max_alt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include permit-required results (default true)",
+                        "name": "permit_ok",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 20, max 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_search.SearchResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/treks": {
             "get": {
                 "produces": [
@@ -2659,6 +3167,31 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/webhooks/razorpay": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "webhooks"
+                ],
+                "summary": "Razorpay payment webhook (HMAC-verified)",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2735,6 +3268,110 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_booking.Booking": {
+            "type": "object",
+            "properties": {
+                "base_inr": {
+                    "type": "integer"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "fee_inr": {
+                    "type": "integer"
+                },
+                "gst_inr": {
+                    "type": "integer"
+                },
+                "guests": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/internal_booking.BookingProvider"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_inr": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_booking.BookingInput": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "provider_id": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_booking.BookingOrder": {
+            "type": "object",
+            "properties": {
+                "breakdown": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "razorpay_key_id": {
+                    "type": "string"
+                },
+                "razorpay_order_id": {
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "total_inr": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_booking.BookingProvider": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
@@ -3433,6 +4070,73 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_photo.PhotoSpot": {
+            "type": "object",
+            "properties": {
+                "best_time": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "destination_slug": {
+                    "type": "string"
+                },
+                "drone_allowed": {
+                    "type": "boolean"
+                },
+                "facing": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tripod_recommended": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_photo.PhotoSpotInput": {
+            "type": "object",
+            "properties": {
+                "best_time": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "destination_slug": {
+                    "type": "string"
+                },
+                "drone_allowed": {
+                    "type": "boolean"
+                },
+                "facing": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tripod_recommended": {
+                    "type": "boolean"
+                }
+            }
+        },
         "internal_provider.Provider": {
             "type": "object",
             "properties": {
@@ -3563,6 +4267,59 @@ const docTemplate = `{
                 },
                 "years_hosting": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_search.Result": {
+            "type": "object",
+            "properties": {
+                "altitude_m": {
+                    "type": "integer"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "'destination' | 'trek'",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tagline": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_search.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_search.Result"
+                    }
+                },
+                "vector_hit": {
+                    "type": "boolean"
                 }
             }
         },
