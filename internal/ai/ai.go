@@ -51,7 +51,35 @@ type planTripReq struct {
 	VegOnly  bool     `json:"veg_only"`
 }
 
-// POST /v1/ai/plan-trip
+// AI request doc-models (OpenAPI/codegen; mirror the handler decode shapes).
+type PlanTripInput struct {
+	Days     int      `json:"days"`
+	Month    int      `json:"month"`
+	Persona  []string `json:"persona"`
+	Base     string   `json:"base"`
+	Budget   string   `json:"budget"`
+	MaxAltM  int      `json:"max_alt_m"`
+	PermitOk bool     `json:"permit_ok"`
+	VegOnly  bool     `json:"veg_only"`
+}
+type AskInput struct {
+	Question      string `json:"question"`
+	DestinationID string `json:"destination_id,omitempty"`
+}
+type IdentifyInput struct {
+	ImageBase64 string `json:"image_base64"`
+	MediaType   string `json:"media_type,omitempty"`
+}
+
+// PlanTrip godoc
+// @Summary  Generate a day-by-day itinerary (Claude)
+// @Tags     ai
+// @Accept   json
+// @Produce  json
+// @Param    body body ai.PlanTripInput true "Trip constraints"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/ai/plan-trip [post]
 func (s *Service) PlanTrip(w http.ResponseWriter, r *http.Request) {
 	var body planTripReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -130,6 +158,16 @@ type askReq struct {
 //	event: citation \n data: {"label":"...","slug":"..."}  — when a known place name is detected
 //	event: done     \n data: {}                       — clean close
 //	event: error    \n data: {"message":"..."}        — failure
+//
+// Ask godoc
+// @Summary  Conversational Q&A with citations (streaming SSE)
+// @Tags     ai
+// @Accept   json
+// @Produce  text/event-stream
+// @Param    body body ai.AskInput true "Question (+ optional destination_id)"
+// @Success  200 {string} string "SSE stream of chunk/citation/done/error events"
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/ai/ask [post]
 func (s *Service) Ask(w http.ResponseWriter, r *http.Request) {
 	var body askReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -313,8 +351,15 @@ type identifyReq struct {
 	MediaType   string `json:"media_type"` // image/jpeg | image/png | image/webp
 }
 
-// POST /v1/ai/identify-place — user uploads a photo, Claude tries to
-// identify the location and returns candidate destination slugs.
+// IdentifyPlace godoc
+// @Summary  Identify a place from a photo, return candidate destinations
+// @Tags     ai
+// @Accept   json
+// @Produce  json
+// @Param    body body ai.IdentifyInput true "Base64 image"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/ai/identify-place [post]
 func (s *Service) IdentifyPlace(w http.ResponseWriter, r *http.Request) {
 	var body identifyReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

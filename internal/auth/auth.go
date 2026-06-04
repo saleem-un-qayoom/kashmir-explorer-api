@@ -41,12 +41,47 @@ func NewService(pool *pgxpool.Pool, jwt config.JWTConfig, otp config.OTPConfig, 
 	}
 }
 
+// Auth request/response doc-models (OpenAPI/codegen). The handlers decode into
+// internal structs; these mirror the real JSON for accurate client generation.
+type PhoneStartInput struct {
+	Phone string `json:"phone"`
+}
+type PhoneVerifyInput struct {
+	Phone string `json:"phone"`
+	Code  string `json:"code"`
+}
+type OAuthInput struct {
+	IDToken string `json:"id_token"`
+}
+type RefreshInput struct {
+	RefreshToken string `json:"refresh_token"`
+}
+type AuthUser struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
+}
+type AuthTokens struct {
+	User         AuthUser `json:"user"`
+	AccessToken  string   `json:"access_token"`
+	RefreshToken string   `json:"refresh_token"`
+	TokenType    string   `json:"token_type"`
+}
+
 // ─── Phone OTP ────────────────────────────────────────────────────
 
 type phoneStartReq struct {
 	Phone string `json:"phone"`
 }
 
+// PhoneStart godoc
+// @Summary  Request an OTP for a phone number
+// @Tags     auth
+// @Accept   json
+// @Produce  json
+// @Param    body body auth.PhoneStartInput true "Phone"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/auth/phone/start [post]
 func (s *Service) PhoneStart(w http.ResponseWriter, r *http.Request) {
 	var body phoneStartReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Phone == "" {
@@ -82,6 +117,15 @@ func (s *Service) PhoneStart(w http.ResponseWriter, r *http.Request) {
 
 type phoneVerifyReq struct{ Phone, Code string }
 
+// PhoneVerify godoc
+// @Summary  Verify an OTP and issue tokens
+// @Tags     auth
+// @Accept   json
+// @Produce  json
+// @Param    body body auth.PhoneVerifyInput true "Phone + code"
+// @Success  200 {object} response.Envelope{data=auth.AuthTokens}
+// @Failure  401 {object} response.Envelope
+// @Router   /v1/auth/phone/verify [post]
 func (s *Service) PhoneVerify(w http.ResponseWriter, r *http.Request) {
 	var body phoneVerifyReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Phone == "" || body.Code == "" {
@@ -138,6 +182,15 @@ type oauthReq struct {
 	IDToken string `json:"id_token"`
 }
 
+// Google godoc
+// @Summary  Sign in with a Google ID token
+// @Tags     auth
+// @Accept   json
+// @Produce  json
+// @Param    body body auth.OAuthInput true "Google id_token"
+// @Success  200 {object} response.Envelope{data=auth.AuthTokens}
+// @Failure  401 {object} response.Envelope
+// @Router   /v1/auth/google [post]
 func (s *Service) Google(w http.ResponseWriter, r *http.Request) {
 	var body oauthReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IDToken == "" {
@@ -152,6 +205,15 @@ func (s *Service) Google(w http.ResponseWriter, r *http.Request) {
 	s.upsertAndIssue(w, r, claims)
 }
 
+// Apple godoc
+// @Summary  Sign in with an Apple identity token
+// @Tags     auth
+// @Accept   json
+// @Produce  json
+// @Param    body body auth.OAuthInput true "Apple id_token"
+// @Success  200 {object} response.Envelope{data=auth.AuthTokens}
+// @Failure  401 {object} response.Envelope
+// @Router   /v1/auth/apple [post]
 func (s *Service) Apple(w http.ResponseWriter, r *http.Request) {
 	var body oauthReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IDToken == "" {
@@ -186,6 +248,15 @@ type refreshReq struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// Refresh godoc
+// @Summary  Exchange a refresh token for new tokens
+// @Tags     auth
+// @Accept   json
+// @Produce  json
+// @Param    body body auth.RefreshInput true "Refresh token"
+// @Success  200 {object} response.Envelope{data=auth.AuthTokens}
+// @Failure  401 {object} response.Envelope
+// @Router   /v1/auth/refresh [post]
 func (s *Service) Refresh(w http.ResponseWriter, r *http.Request) {
 	var body refreshReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.RefreshToken == "" {

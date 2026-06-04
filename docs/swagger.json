@@ -1563,6 +1563,366 @@
                 }
             }
         },
+        "/v1/ai/ask": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "Conversational Q\u0026A with citations (streaming SSE)",
+                "parameters": [
+                    {
+                        "description": "Question (+ optional destination_id)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ai.AskInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSE stream of chunk/citation/done/error events",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/ai/identify-place": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "Identify a place from a photo, return candidate destinations",
+                "parameters": [
+                    {
+                        "description": "Base64 image",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ai.IdentifyInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/ai/plan-trip": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "Generate a day-by-day itinerary (Claude)",
+                "parameters": [
+                    {
+                        "description": "Trip constraints",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ai.PlanTripInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/apple": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Sign in with an Apple identity token",
+                "parameters": [
+                    {
+                        "description": "Apple id_token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.OAuthInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_auth.AuthTokens"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/google": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Sign in with a Google ID token",
+                "parameters": [
+                    {
+                        "description": "Google id_token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.OAuthInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_auth.AuthTokens"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/phone/start": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Request an OTP for a phone number",
+                "parameters": [
+                    {
+                        "description": "Phone",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.PhoneStartInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/phone/verify": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify an OTP and issue tokens",
+                "parameters": [
+                    {
+                        "description": "Phone + code",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.PhoneVerifyInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_auth.AuthTokens"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Exchange a refresh token for new tokens",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.RefreshInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_auth.AuthTokens"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/bookings": {
             "get": {
                 "security": [
@@ -3261,6 +3621,123 @@
                     "type": "string"
                 },
                 "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ai.AskInput": {
+            "type": "object",
+            "properties": {
+                "destination_id": {
+                    "type": "string"
+                },
+                "question": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ai.IdentifyInput": {
+            "type": "object",
+            "properties": {
+                "image_base64": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ai.PlanTripInput": {
+            "type": "object",
+            "properties": {
+                "base": {
+                    "type": "string"
+                },
+                "budget": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "max_alt_m": {
+                    "type": "integer"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "permit_ok": {
+                    "type": "boolean"
+                },
+                "persona": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "veg_only": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_auth.AuthTokens": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/internal_auth.AuthUser"
+                }
+            }
+        },
+        "internal_auth.AuthUser": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.OAuthInput": {
+            "type": "object",
+            "properties": {
+                "id_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.PhoneStartInput": {
+            "type": "object",
+            "properties": {
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.PhoneVerifyInput": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.RefreshInput": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
                     "type": "string"
                 }
             }
