@@ -37,6 +37,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/photo"
 	"github.com/kashmir-explorer/api/internal/provider"
 	"github.com/kashmir-explorer/api/internal/report"
+	"github.com/kashmir-explorer/api/internal/review"
 	"github.com/kashmir-explorer/api/internal/search"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
@@ -82,6 +83,7 @@ type Deps struct {
 	Groups       *groups.Service
 	Image        *image.Service
 	Report       *report.Service
+	Review       *review.Service
 	Wallet       *wallet.Service
 	Subscription *subscription.Service
 }
@@ -166,6 +168,7 @@ func registerPublic(r chi.Router, d Deps) {
 	// photo-spots route lives inside the /destinations group but is served by
 	// the photo package, so the handler is injected.
 	d.Dest.PublicRoutes(r, d.Photo.ForDestination)
+	r.Get("/destinations/{slug}/reviews", d.Review.ListForDestination)
 
 	r.Route("/treks", func(r chi.Router) {
 		r.Get("/", d.Trek.List)
@@ -173,6 +176,7 @@ func registerPublic(r chi.Router, d Deps) {
 		r.Get("/{slug}/path", d.Trek.Path)
 		r.Get("/{slug}/density", d.Crowd.Density)
 		r.Get("/{slug}/reports", d.Report.PublicList) // V3 · community trail conditions
+		r.Get("/{slug}/reviews", d.Review.ListForTrek)
 	})
 
 	// V3 · public share-link viewer (no auth)
@@ -250,6 +254,12 @@ func registerAuthed(r chi.Router, d Deps) {
 		// Trek nav extras (auth required for accountability).
 		r.Post("/treks/{slug}/ping", d.Crowd.Ping)
 		r.Post("/treks/{slug}/report", d.Report.Create)
+
+		// Reviews (create/update is an upsert per user+target).
+		r.Post("/destinations/{slug}/reviews", d.Review.CreateForDestination)
+		r.Post("/treks/{slug}/reviews", d.Review.CreateForTrek)
+		r.Get("/me/reviews", d.Review.Mine)
+		r.Delete("/reviews/{id}", d.Review.Delete)
 
 		// V3 · tracks + summit log
 		r.Post("/tracks", d.TrekV3.CreateTrack)
@@ -351,6 +361,10 @@ func registerAdmin(r chi.Router, d Deps) {
 		// Trek reports queue.
 		r.Get("/reports", d.Report.AdminList)
 		r.Post("/reports/{id}/resolve", d.Report.AdminResolve)
+
+		// Reviews moderation.
+		r.Get("/reviews", d.Review.AdminList)
+		r.Delete("/reviews/{id}", d.Review.AdminDelete)
 
 		// V3 · all track recordings (moderation / abuse triage)
 		r.Get("/tracks", d.TrekV3.AdminTracks)

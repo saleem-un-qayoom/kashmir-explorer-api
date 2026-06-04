@@ -955,6 +955,41 @@ definitions:
       waypoint_idx:
         type: integer
     type: object
+  internal_review.Review:
+    properties:
+      author:
+        type: string
+      body:
+        type: string
+      created_at:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: string
+      photos:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+      target_slug:
+        type: string
+      target_type:
+        description: Populated on the "my reviews" + admin lists.
+        type: string
+    type: object
+  internal_review.ReviewInput:
+    properties:
+      body:
+        type: string
+      photos:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+    type: object
   internal_search.Result:
     properties:
       altitude_m:
@@ -2370,6 +2405,47 @@ paths:
       summary: Resolve or dismiss a report (admin)
       tags:
       - admin-reports
+  /v1/admin/reviews:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_review.Review'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all reviews (admin moderation)
+      tags:
+      - admin-reviews
+  /v1/admin/reviews/{id}:
+    delete:
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Delete any review (admin)
+      tags:
+      - admin-reviews
   /v1/admin/roads/{id}/status:
     put:
       consumes:
@@ -3321,6 +3397,66 @@ paths:
       summary: Photo spots near a destination
       tags:
       - photo-spots
+  /v1/destinations/{slug}/reviews:
+    get:
+      parameters:
+      - description: Destination slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_review.Review'
+                  type: array
+              type: object
+      summary: List reviews for a destination
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Destination slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Review
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_review.ReviewInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create/update my review for a destination
+      tags:
+      - reviews
   /v1/destinations/featured:
     get:
       produces:
@@ -3722,6 +3858,27 @@ paths:
       summary: My summit log (completed treks)
       tags:
       - tracks
+  /v1/me/reviews:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_review.Review'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my reviews
+      tags:
+      - reviews
   /v1/me/subscribe:
     post:
       consumes:
@@ -3934,6 +4091,26 @@ paths:
       summary: Region detail (admin)
       tags:
       - taxonomy
+  /v1/reviews/{id}:
+    delete:
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Delete my review
+      tags:
+      - reviews
   /v1/roads/status:
     get:
       produces:
@@ -4357,6 +4534,66 @@ paths:
       summary: Public feed of a trek's trail-condition reports
       tags:
       - reports
+  /v1/treks/{slug}/reviews:
+    get:
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_review.Review'
+                  type: array
+              type: object
+      summary: List reviews for a trek
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Review
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_review.ReviewInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create/update my review for a trek
+      tags:
+      - reviews
   /v1/upload/presign:
     post:
       consumes:

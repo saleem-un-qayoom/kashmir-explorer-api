@@ -11,10 +11,12 @@ DELETE	/v1/admin/permits/{id}
 DELETE	/v1/admin/photo-spots/{id}
 DELETE	/v1/admin/providers/{id}
 DELETE	/v1/admin/regions/{id}
+DELETE	/v1/admin/reviews/{id}
 DELETE	/v1/admin/roads/status/{id}
 DELETE	/v1/admin/treks/{id}
 DELETE	/v1/groups/{code}/leave
 DELETE	/v1/itineraries/{id}
+DELETE	/v1/reviews/{id}
 DELETE	/v1/saved/{destinationId}
 GET	/healthz
 GET	/readyz
@@ -27,6 +29,7 @@ GET	/v1/admin/photo-spots
 GET	/v1/admin/photo-spots/{id}
 GET	/v1/admin/regions/{id}
 GET	/v1/admin/reports
+GET	/v1/admin/reviews
 GET	/v1/admin/roads/status
 GET	/v1/admin/roads/status/{id}
 GET	/v1/admin/tracks
@@ -54,12 +57,14 @@ GET	/v1/destinations/nearby
 GET	/v1/destinations/trending
 GET	/v1/destinations/{slug}
 GET	/v1/destinations/{slug}/photo-spots
+GET	/v1/destinations/{slug}/reviews
 GET	/v1/groups/{code}
 GET	/v1/images/destination/{id}
 GET	/v1/images/trek/{id}
 GET	/v1/itineraries/
 GET	/v1/me
 GET	/v1/me/completions
+GET	/v1/me/reviews
 GET	/v1/me/subscription
 GET	/v1/me/tracks
 GET	/v1/permits/
@@ -79,6 +84,7 @@ GET	/v1/treks/{slug}
 GET	/v1/treks/{slug}/density
 GET	/v1/treks/{slug}/path
 GET	/v1/treks/{slug}/reports
+GET	/v1/treks/{slug}/reviews
 GET	/v1/weather/destination/{slug}
 GET	/ws/advisories
 GET	/ws/crowd/{slug}
@@ -112,6 +118,7 @@ POST	/v1/auth/phone/verify
 POST	/v1/auth/refresh
 POST	/v1/bookings/
 POST	/v1/bookings/{id}/cancel
+POST	/v1/destinations/{slug}/reviews
 POST	/v1/groups
 POST	/v1/groups/join
 POST	/v1/itineraries/
@@ -123,6 +130,7 @@ POST	/v1/tracks
 POST	/v1/treks/{slug}/bag
 POST	/v1/treks/{slug}/ping
 POST	/v1/treks/{slug}/report
+POST	/v1/treks/{slug}/reviews
 POST	/v1/upload/presign
 POST	/v1/webhooks/razorpay
 PUT	/v1/admin/advisories/{id}
