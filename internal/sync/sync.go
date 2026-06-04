@@ -18,6 +18,16 @@ type Service struct{ pool *pgxpool.Pool }
 
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
+// Sync doc-models (OpenAPI/codegen).
+type SyncOp struct {
+	Op      string          `json:"op"`
+	Payload json.RawMessage `json:"payload"`
+	Ts      int64           `json:"ts"`
+}
+type SyncInput struct {
+	Ops []SyncOp `json:"ops"`
+}
+
 type op struct {
 	Op      string          `json:"op"`
 	Payload json.RawMessage `json:"payload"`
@@ -27,7 +37,16 @@ type req struct {
 	Ops []op `json:"ops"`
 }
 
-// POST /v1/sync
+// Apply godoc
+// @Summary  Apply queued offline operations (save/unsave)
+// @Tags     sync
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body sync.SyncInput true "Offline ops"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/sync [post]
 func (s *Service) Apply(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body req

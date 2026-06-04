@@ -31,7 +31,15 @@ func NewService(pool *pgxpool.Pool, passTypeID, teamID string) *Service {
 	return &Service{pool: pool, passTypeID: passTypeID, teamID: teamID}
 }
 
-// GET /v1/bookings/{id}/wallet — returns pass.json.
+// For godoc
+// @Summary  Apple Wallet pass (pass.json) for a booking
+// @Tags     wallet
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Booking ID"
+// @Success  200 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/bookings/{id}/wallet [get]
 func (s *Service) For(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := mw.UserID(r)

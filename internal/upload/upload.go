@@ -29,7 +29,27 @@ type presignReq struct {
 	ContentType string `json:"contentType"`
 }
 
-// POST /v1/upload/presign — returns a 5-min upload URL + final public URL.
+// Upload doc-models (OpenAPI/codegen).
+type PresignInput struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"contentType"`
+}
+type PresignResult struct {
+	UploadURL string `json:"upload_url"`
+	PublicURL string `json:"public_url"`
+	Key       string `json:"key"`
+}
+
+// Presign godoc
+// @Summary  Get a presigned R2 upload URL
+// @Tags     upload
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body upload.PresignInput true "File"
+// @Success  200 {object} response.Envelope{data=upload.PresignResult}
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/upload/presign [post]
 func (s *Service) Presign(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body presignReq

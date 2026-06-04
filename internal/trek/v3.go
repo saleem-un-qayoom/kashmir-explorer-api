@@ -42,6 +42,59 @@ type createTrackReq struct {
 	IsPublic     bool            `json:"is_public"`
 }
 
+// V3 doc-models (OpenAPI/codegen).
+type TrackInput struct {
+	TrekSlug     string          `json:"trek_slug,omitempty"`
+	Name         string          `json:"name"`
+	StartedAt    string          `json:"started_at"`
+	EndedAt      string          `json:"ended_at"`
+	DistanceM    int             `json:"distance_m"`
+	DurationS    int             `json:"duration_s"`
+	GainM        int             `json:"gain_m"`
+	LossM        int             `json:"loss_m"`
+	MaxAltitudeM *int            `json:"max_altitude_m,omitempty"`
+	Polyline     json.RawMessage `json:"polyline"`
+	IsPublic     bool            `json:"is_public"`
+}
+type Track struct {
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	StartedAt    string          `json:"started_at"`
+	EndedAt      string          `json:"ended_at"`
+	DistanceM    int             `json:"distance_m"`
+	DurationS    int             `json:"duration_s"`
+	GainM        int             `json:"gain_m"`
+	MaxAltitudeM *int            `json:"max_altitude_m,omitempty"`
+	TrekSlug     *string         `json:"trek_slug,omitempty"`
+	ShareToken   *string         `json:"share_token,omitempty"`
+	IsPublic     bool            `json:"is_public"`
+	CreatedAt    string          `json:"created_at,omitempty"`
+	Polyline     json.RawMessage `json:"polyline,omitempty"`
+}
+type BagInput struct {
+	Notes            string `json:"notes,omitempty"`
+	TrackRecordingID string `json:"track_recording_id,omitempty"`
+}
+type Completion struct {
+	ID               string  `json:"id"`
+	CompletedAt      string  `json:"completed_at"`
+	Notes            *string `json:"notes,omitempty"`
+	TrekSlug         string  `json:"trek_slug"`
+	TrekName         string  `json:"trek_name"`
+	MaxAltitudeM     *int    `json:"max_altitude_m,omitempty"`
+	Difficulty       string  `json:"difficulty"`
+	TrackRecordingID *string `json:"track_recording_id,omitempty"`
+}
+
+// CreateTrack godoc
+// @Summary  Save a recorded GPS track
+// @Tags     tracks
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body trek.TrackInput true "Track recording"
+// @Success  201 {object} response.Envelope
+// @Router   /v1/tracks [post]
 func (s *V3) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	if userID == "" {
@@ -98,6 +151,13 @@ func (s *V3) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// MyTracks godoc
+// @Summary  List my recorded tracks
+// @Tags     tracks
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]trek.Track}
+// @Router   /v1/me/tracks [get]
 func (s *V3) MyTracks(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	if userID == "" {
@@ -144,6 +204,14 @@ func (s *V3) MyTracks(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
+// ShareTrack godoc
+// @Summary  View a publicly shared track by token
+// @Tags     tracks
+// @Produce  json
+// @Param    token path string true "Share token"
+// @Success  200 {object} response.Envelope{data=trek.Track}
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/tracks/share/{token} [get]
 func (s *V3) ShareTrack(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 
@@ -182,6 +250,16 @@ type bagReq struct {
 	TrackRecordingID string `json:"track_recording_id,omitempty"`
 }
 
+// Bag godoc
+// @Summary  Mark a trek as completed (summit log)
+// @Tags     tracks
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    slug path string         true "Trek slug"
+// @Param    body body trek.BagInput false "Optional notes / track id"
+// @Success  201 {object} response.Envelope
+// @Router   /v1/treks/{slug}/bag [post]
 func (s *V3) Bag(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	if userID == "" {
@@ -219,6 +297,13 @@ func (s *V3) Bag(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]any{"id": id, "trek_slug": slug})
 }
 
+// MyCompletions godoc
+// @Summary  My summit log (completed treks)
+// @Tags     tracks
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]trek.Completion}
+// @Router   /v1/me/completions [get]
 func (s *V3) MyCompletions(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	if userID == "" {
@@ -262,6 +347,13 @@ func (s *V3) MyCompletions(w http.ResponseWriter, r *http.Request) {
 
 /* ── admin ──────────────────────────────────────────────── */
 
+// AdminTracks godoc
+// @Summary  All recorded tracks (admin moderation)
+// @Tags     admin-tracks
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]trek.Track}
+// @Router   /v1/admin/tracks [get]
 func (s *V3) AdminTracks(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT tr.id::text, tr.name, COALESCE(u.name, u.phone, '—'),

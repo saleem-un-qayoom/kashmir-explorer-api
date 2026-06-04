@@ -1371,6 +1371,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/admin/tracks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-tracks"
+                ],
+                "summary": "All recorded tracks (admin moderation)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_trek.Track"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/admin/treks": {
             "get": {
                 "security": [
@@ -2199,6 +2238,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/bookings/{id}/wallet": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wallet"
+                ],
+                "summary": "Apple Wallet pass (pass.json) for a booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/categories": {
             "get": {
                 "produces": [
@@ -2737,6 +2815,184 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/groups": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Create a trip group (returns invite code)",
+                "parameters": [
+                    {
+                        "description": "Group",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_groups.GroupCreateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_groups.Group"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/groups/join": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Join a trip group by invite code",
+                "parameters": [
+                    {
+                        "description": "Invite code",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_groups.GroupJoinInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/groups/{code}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get a group's members + invite code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Invite code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_groups.Group"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/groups/{code}/leave": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Leave a trip group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Invite code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/v1/images/destination/{id}": {
             "get": {
                 "produces": [
@@ -3033,6 +3289,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/me/completions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracks"
+                ],
+                "summary": "My summit log (completed treks)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_trek.Completion"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/me/subscribe": {
             "post": {
                 "security": [
@@ -3104,6 +3399,45 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/internal_subscription.Subscription"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/tracks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracks"
+                ],
+                "summary": "List my recorded tracks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_trek.Track"
+                                            }
                                         }
                                     }
                                 }
@@ -3550,6 +3884,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/sync": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Apply queued offline operations (save/unsave)",
+                "parameters": [
+                    {
+                        "description": "Offline ops",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_sync.SyncInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tracks": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracks"
+                ],
+                "summary": "Save a recorded GPS track",
+                "parameters": [
+                    {
+                        "description": "Track recording",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_trek.TrackInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tracks/share/{token}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracks"
+                ],
+                "summary": "View a publicly shared track by token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Share token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_trek.Track"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/treks": {
             "get": {
                 "produces": [
@@ -3643,6 +4105,50 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}/bag": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tracks"
+                ],
+                "summary": "Mark a trek as completed (summit log)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional notes / track id",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_trek.BagInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
@@ -3852,6 +4358,62 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/upload/presign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Get a presigned R2 upload URL",
+                "parameters": [
+                    {
+                        "description": "File",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_upload.PresignInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_upload.PresignResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
                     }
                 }
@@ -4814,6 +5376,59 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_groups.Group": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "invite_code": {
+                    "type": "string"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_groups.GroupMember"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_groups.GroupCreateInput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_groups.GroupJoinInput": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_groups.GroupMember": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_image.Image": {
             "type": "object",
             "properties": {
@@ -5311,6 +5926,34 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_sync.SyncInput": {
+            "type": "object",
+            "properties": {
+                "ops": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_sync.SyncOp"
+                    }
+                }
+            }
+        },
+        "internal_sync.SyncOp": {
+            "type": "object",
+            "properties": {
+                "op": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "ts": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_trek.AdminTrek": {
             "type": "object",
             "properties": {
@@ -5444,6 +6087,134 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_trek.BagInput": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "string"
+                },
+                "track_recording_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_trek.Completion": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_altitude_m": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "track_recording_id": {
+                    "type": "string"
+                },
+                "trek_name": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_trek.Track": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "distance_m": {
+                    "type": "integer"
+                },
+                "duration_s": {
+                    "type": "integer"
+                },
+                "ended_at": {
+                    "type": "string"
+                },
+                "gain_m": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "max_altitude_m": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "polyline": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "share_token": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_trek.TrackInput": {
+            "type": "object",
+            "properties": {
+                "distance_m": {
+                    "type": "integer"
+                },
+                "duration_s": {
+                    "type": "integer"
+                },
+                "ended_at": {
+                    "type": "string"
+                },
+                "gain_m": {
+                    "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "loss_m": {
+                    "type": "integer"
+                },
+                "max_altitude_m": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "polyline": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_trek.Trek": {
             "type": "object",
             "properties": {
@@ -5537,6 +6308,31 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "uniqueness": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_upload.PresignInput": {
+            "type": "object",
+            "properties": {
+                "contentType": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_upload.PresignResult": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "public_url": {
+                    "type": "string"
+                },
+                "upload_url": {
                     "type": "string"
                 }
             }

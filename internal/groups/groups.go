@@ -30,7 +30,35 @@ type createReq struct {
 	TrekSlug string `json:"trek_slug,omitempty"`
 }
 
-// POST /v1/groups
+// Group doc-models (OpenAPI/codegen).
+type GroupCreateInput struct {
+	Name     string `json:"name"`
+	TrekSlug string `json:"trek_slug,omitempty"`
+}
+type GroupJoinInput struct {
+	Code string `json:"code"`
+}
+type GroupMember struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+type Group struct {
+	ID         string        `json:"id"`
+	Name       string        `json:"name"`
+	InviteCode string        `json:"invite_code"`
+	TrekSlug   *string       `json:"trek_slug,omitempty"`
+	Members    []GroupMember `json:"members,omitempty"`
+}
+
+// Create godoc
+// @Summary  Create a trip group (returns invite code)
+// @Tags     groups
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body groups.GroupCreateInput true "Group"
+// @Success  201 {object} response.Envelope{data=groups.Group}
+// @Router   /v1/groups [post]
 func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body createReq
@@ -67,7 +95,16 @@ type joinReq struct {
 	Code string `json:"code"`
 }
 
-// POST /v1/groups/join
+// Join godoc
+// @Summary  Join a trip group by invite code
+// @Tags     groups
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body groups.GroupJoinInput true "Invite code"
+// @Success  200 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/groups/join [post]
 func (s *Service) Join(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body joinReq
@@ -97,7 +134,16 @@ func (s *Service) Join(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]any{"group_id": gid})
 }
 
-// GET /v1/groups/{code}
+// Get godoc
+// @Summary  Get a group's members + invite code
+// @Tags     groups
+// @Security BearerAuth
+// @Produce  json
+// @Param    code path string true "Invite code"
+// @Success  200 {object} response.Envelope{data=groups.Group}
+// @Failure  403 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/groups/{code} [get]
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	code := strings.ToUpper(chi.URLParam(r, "code"))
 	userID := mw.UserID(r)
@@ -152,7 +198,13 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DELETE /v1/groups/{code}/leave
+// Leave godoc
+// @Summary  Leave a trip group
+// @Tags     groups
+// @Security BearerAuth
+// @Param    code path string true "Invite code"
+// @Success  204
+// @Router   /v1/groups/{code}/leave [delete]
 func (s *Service) Leave(w http.ResponseWriter, r *http.Request) {
 	code := strings.ToUpper(chi.URLParam(r, "code"))
 	userID := mw.UserID(r)
