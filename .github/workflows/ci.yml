@@ -33,3 +33,16 @@ jobs:
 
       - name: test
         run: go test ./... -race -cover
+
+      # The OpenAPI spec (docs/) is the source of truth for generated TS clients,
+      # so it must always match the handler annotations. Regenerate and fail if
+      # the committed spec drifted.
+      - name: openapi spec up-to-date
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@v1.16.4
+          "$(go env GOPATH)/bin/swag" init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+          if ! git diff --quiet -- docs/; then
+            echo "docs/ is stale — run 'make swagger' and commit:"
+            git --no-pager diff --stat -- docs/
+            exit 1
+          fi
