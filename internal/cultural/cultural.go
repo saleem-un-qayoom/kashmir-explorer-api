@@ -14,7 +14,47 @@ type Service struct{ pool *pgxpool.Pool }
 
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
-// GET /v1/cultural/food
+// Cultural read models (OpenAPI/codegen; handlers emit these exact fields).
+type Dish struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	NameUrdu     string `json:"name_urdu"`
+	NameKashmiri string `json:"name_kashmiri"`
+	Vegetarian   bool   `json:"vegetarian"`
+	Description  string `json:"description"`
+	WhereToTry   string `json:"where_to_try"`
+	PriceRange   string `json:"price_range"`
+}
+
+type Festival struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Month       int    `json:"month"`
+	Duration    string `json:"duration"`
+	Description string `json:"description"`
+	Region      string `json:"region"`
+}
+
+type Craft struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Origin      string `json:"origin"`
+	Price       string `json:"price"`
+	Description string `json:"description"`
+}
+
+type EtiquetteTip struct {
+	Category string `json:"category"`
+	Title    string `json:"title"`
+	Body     string `json:"body"`
+}
+
+// Food godoc
+// @Summary  List Wazwan dishes
+// @Tags     cultural
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]cultural.Dish}
+// @Router   /v1/cultural/food [get]
 func (s *Service) Food(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text,
@@ -51,7 +91,12 @@ func (s *Service) Food(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/cultural/festivals
+// Festivals godoc
+// @Summary  List festivals
+// @Tags     cultural
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]cultural.Festival}
+// @Router   /v1/cultural/festivals [get]
 func (s *Service) Festivals(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, name,
@@ -84,7 +129,12 @@ func (s *Service) Festivals(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/cultural/crafts
+// Crafts godoc
+// @Summary  List handicrafts
+// @Tags     cultural
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]cultural.Craft}
+// @Router   /v1/cultural/crafts [get]
 func (s *Service) Crafts(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, name,
@@ -114,7 +164,12 @@ func (s *Service) Crafts(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/cultural/etiquette
+// Etiquette godoc
+// @Summary  List etiquette tips
+// @Tags     cultural
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]cultural.EtiquetteTip}
+// @Router   /v1/cultural/etiquette [get]
 func (s *Service) Etiquette(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT COALESCE(details->>'category', ''), name, COALESCE(description, '')

@@ -15,7 +15,42 @@ type Service struct{ pool *pgxpool.Pool }
 
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
-// GET /v1/permits
+// Permit documents a permit record (OpenAPI/codegen model; handlers emit these
+// fields). Numeric-looking fields are strings to match the stored values.
+type Permit struct {
+	ID             string  `json:"id"`
+	Slug           string  `json:"slug,omitempty"`
+	Name           string  `json:"name"`
+	Required       string  `json:"required"`
+	Office         string  `json:"office"`
+	ProcessingDays string  `json:"processing_days"`
+	CostInr        string  `json:"cost_inr"`
+	Validity       string  `json:"validity"`
+	Status         string  `json:"status"`
+	Notes          *string `json:"notes,omitempty"`
+	OfficialURL    *string `json:"official_url,omitempty"`
+}
+
+// PermitInput is the admin create/update body (OpenAPI/codegen model).
+type PermitInput struct {
+	Slug           string  `json:"slug"`
+	Name           string  `json:"name"`
+	Required       string  `json:"required"`
+	Office         string  `json:"office"`
+	ProcessingDays string  `json:"processing_days"`
+	CostInr        string  `json:"cost_inr"`
+	Validity       string  `json:"validity"`
+	Status         string  `json:"status"`
+	Notes          *string `json:"notes"`
+	OfficialURL    *string `json:"official_url"`
+}
+
+// List godoc
+// @Summary  List permits
+// @Tags     permits
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]permit.Permit}
+// @Router   /v1/permits [get]
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, slug, name, required, office, processing_days,
@@ -44,7 +79,14 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/permits/check?destinations=slug1,slug2
+// Check godoc
+// @Summary  Permits required for a set of destinations
+// @Tags     permits
+// @Produce  json
+// @Param    destinations query string true "CSV of destination slugs"
+// @Success  200 {object} response.Envelope{data=[]permit.Permit}
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/permits/check [get]
 func (s *Service) Check(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("destinations")
 	if q == "" {
@@ -104,6 +146,14 @@ func (s *Service) Check(w http.ResponseWriter, r *http.Request) {
 
 // ─── Admin CRUD ────────────────────────────────────────────────
 
+// AdminGet godoc
+// @Summary  Get a permit (admin)
+// @Tags     admin-permits
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Permit ID"
+// @Success  200 {object} response.Envelope{data=permit.Permit}
+// @Router   /v1/admin/permits/{id} [get]
 func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var p struct {
@@ -131,6 +181,16 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, p)
 }
 
+// AdminCreate godoc
+// @Summary  Create a permit (admin)
+// @Tags     admin-permits
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body permit.PermitInput true "Permit"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/permits [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Slug           string  `json:"slug"`
@@ -162,6 +222,16 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
+// AdminUpdate godoc
+// @Summary  Update a permit (admin)
+// @Tags     admin-permits
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string            true "Permit ID"
+// @Param    body body permit.PermitInput true "Permit"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/permits/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in struct {
@@ -194,6 +264,13 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
+// AdminDelete godoc
+// @Summary  Delete a permit (admin)
+// @Tags     admin-permits
+// @Security BearerAuth
+// @Param    id path string true "Permit ID"
+// @Success  204
+// @Router   /v1/admin/permits/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM permits WHERE id = $1`, id)

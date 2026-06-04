@@ -516,6 +516,277 @@
                 }
             }
         },
+        "/v1/admin/images": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-images"
+                ],
+                "summary": "Create an image record (admin)",
+                "parameters": [
+                    {
+                        "description": "Image",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_image.ImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/images/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-images"
+                ],
+                "summary": "Update image metadata (caption/hero/order) (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Image",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_image.ImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-images"
+                ],
+                "summary": "Delete an image (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/admin/permits": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-permits"
+                ],
+                "summary": "Create a permit (admin)",
+                "parameters": [
+                    {
+                        "description": "Permit",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_permit.PermitInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/permits/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-permits"
+                ],
+                "summary": "Get a permit (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Permit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_permit.Permit"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-permits"
+                ],
+                "summary": "Update a permit (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Permit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permit",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_permit.PermitInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-permits"
+                ],
+                "summary": "Delete a permit (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Permit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/v1/admin/providers": {
             "post": {
                 "security": [
@@ -1148,6 +1419,142 @@
                 }
             }
         },
+        "/v1/cultural/crafts": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cultural"
+                ],
+                "summary": "List handicrafts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_cultural.Craft"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cultural/etiquette": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cultural"
+                ],
+                "summary": "List etiquette tips",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_cultural.EtiquetteTip"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cultural/festivals": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cultural"
+                ],
+                "summary": "List festivals",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_cultural.Festival"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cultural/food": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cultural"
+                ],
+                "summary": "List Wazwan dishes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_cultural.Dish"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/destinations": {
             "get": {
                 "produces": [
@@ -1433,6 +1840,92 @@
                 }
             }
         },
+        "/v1/images/destination/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "summary": "List images for a destination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Destination ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_image.Image"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/images/trek/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "summary": "List images for a trek",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_image.Image"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/itineraries": {
             "get": {
                 "security": [
@@ -1606,6 +2099,89 @@
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/permits": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permits"
+                ],
+                "summary": "List permits",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_permit.Permit"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/permits/check": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permits"
+                ],
+                "summary": "Permits required for a set of destinations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSV of destination slugs",
+                        "name": "destinations",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_permit.Permit"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
@@ -2030,6 +2606,52 @@
                     }
                 }
             }
+        },
+        "/v1/weather/destination/{slug}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "weather"
+                ],
+                "summary": "Current weather for a destination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Destination slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_weather.Snapshot"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2106,6 +2728,92 @@
                     "type": "string"
                 },
                 "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_cultural.Craft": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "origin": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_cultural.Dish": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "name_kashmiri": {
+                    "type": "string"
+                },
+                "name_urdu": {
+                    "type": "string"
+                },
+                "price_range": {
+                    "type": "string"
+                },
+                "vegetarian": {
+                    "type": "boolean"
+                },
+                "where_to_try": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_cultural.EtiquetteTip": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_cultural.Festival": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
                     "type": "string"
                 }
             }
@@ -2587,6 +3295,137 @@
                 }
             }
         },
+        "internal_image.Image": {
+            "type": "object",
+            "properties": {
+                "blurhash": {
+                    "type": "string"
+                },
+                "caption": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "destination_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_hero": {
+                    "type": "boolean"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "trek_id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_image.ImageInput": {
+            "type": "object",
+            "properties": {
+                "blurhash": {
+                    "type": "string"
+                },
+                "caption": {
+                    "type": "string"
+                },
+                "destination_id": {
+                    "type": "string"
+                },
+                "is_hero": {
+                    "type": "boolean"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "trek_id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_permit.Permit": {
+            "type": "object",
+            "properties": {
+                "cost_inr": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "office": {
+                    "type": "string"
+                },
+                "official_url": {
+                    "type": "string"
+                },
+                "processing_days": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "validity": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_permit.PermitInput": {
+            "type": "object",
+            "properties": {
+                "cost_inr": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "office": {
+                    "type": "string"
+                },
+                "official_url": {
+                    "type": "string"
+                },
+                "processing_days": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "validity": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_provider.Provider": {
             "type": "object",
             "properties": {
@@ -3019,6 +3858,53 @@
                 },
                 "slug": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_weather.Snapshot": {
+            "type": "object",
+            "properties": {
+                "aqi": {
+                    "type": "integer"
+                },
+                "cached": {
+                    "type": "boolean"
+                },
+                "condition": {
+                    "type": "string"
+                },
+                "feels_like_c": {
+                    "type": "number"
+                },
+                "humidity_pct": {
+                    "type": "integer"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "precip_mm": {
+                    "type": "number"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "sunrise": {
+                    "type": "string"
+                },
+                "sunset": {
+                    "type": "string"
+                },
+                "temp_c": {
+                    "type": "number"
+                },
+                "wind_kmh": {
+                    "type": "number"
                 }
             }
         }

@@ -20,7 +20,33 @@ func NewService(pool *pgxpool.Pool, key string) *Service {
 	return &Service{pool: pool, ow: clients.NewOpenWeather(key)}
 }
 
-// GET /v1/weather/destination/{slug}
+// Snapshot documents the weather response (OpenAPI/codegen model). The handler
+// emits these exact fields; cached responses omit the live-only ones.
+type Snapshot struct {
+	Slug        string  `json:"slug"`
+	Lat         float64 `json:"lat,omitempty"`
+	Lng         float64 `json:"lng,omitempty"`
+	TempC       float64 `json:"temp_c"`
+	FeelsLikeC  float64 `json:"feels_like_c"`
+	Condition   string  `json:"condition"`
+	WindKmh     float64 `json:"wind_kmh,omitempty"`
+	HumidityPct int     `json:"humidity_pct,omitempty"`
+	AQI         int     `json:"aqi"`
+	PrecipMm    float64 `json:"precip_mm,omitempty"`
+	Sunrise     string  `json:"sunrise,omitempty"`
+	Sunset      string  `json:"sunset,omitempty"`
+	Cached      bool    `json:"cached"`
+	Source      string  `json:"source"`
+}
+
+// ForDestination godoc
+// @Summary  Current weather for a destination
+// @Tags     weather
+// @Produce  json
+// @Param    slug path string true "Destination slug"
+// @Success  200 {object} response.Envelope{data=weather.Snapshot}
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/weather/destination/{slug} [get]
 func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 

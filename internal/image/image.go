@@ -27,7 +27,24 @@ type Image struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-// GET /v1/images/destination/{id}
+// ImageInput is the admin create/update body (OpenAPI/codegen model).
+type ImageInput struct {
+	DestinationID *string `json:"destination_id"`
+	TrekID        *string `json:"trek_id"`
+	URL           string  `json:"url"`
+	Blurhash      *string `json:"blurhash"`
+	Caption       *string `json:"caption"`
+	IsHero        bool    `json:"is_hero"`
+	SortOrder     int     `json:"sort_order"`
+}
+
+// ForDestination godoc
+// @Summary  List images for a destination
+// @Tags     images
+// @Produce  json
+// @Param    id path string true "Destination ID"
+// @Success  200 {object} response.Envelope{data=[]image.Image}
+// @Router   /v1/images/destination/{id} [get]
 func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	rows, err := s.pool.Query(r.Context(), `
@@ -54,7 +71,13 @@ func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/images/trek/{id}
+// ForTrek godoc
+// @Summary  List images for a trek
+// @Tags     images
+// @Produce  json
+// @Param    id path string true "Trek ID"
+// @Success  200 {object} response.Envelope{data=[]image.Image}
+// @Router   /v1/images/trek/{id} [get]
 func (s *Service) ForTrek(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	rows, err := s.pool.Query(r.Context(), `
@@ -81,7 +104,16 @@ func (s *Service) ForTrek(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// POST /v1/admin/images — create image record.
+// AdminCreate godoc
+// @Summary  Create an image record (admin)
+// @Tags     admin-images
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body image.ImageInput true "Image"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/images [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		DestinationID *string `json:"destination_id"`
@@ -112,7 +144,16 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
-// PUT /v1/admin/images/{id}
+// AdminUpdate godoc
+// @Summary  Update image metadata (caption/hero/order) (admin)
+// @Tags     admin-images
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string          true "Image ID"
+// @Param    body body image.ImageInput true "Image"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/images/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in struct {
@@ -134,7 +175,13 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
-// DELETE /v1/admin/images/{id}
+// AdminDelete godoc
+// @Summary  Delete an image (admin)
+// @Tags     admin-images
+// @Security BearerAuth
+// @Param    id path string true "Image ID"
+// @Success  204
+// @Router   /v1/admin/images/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM images WHERE id = $1`, id)

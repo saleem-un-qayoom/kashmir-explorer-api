@@ -51,6 +51,62 @@ definitions:
       valid_until:
         type: string
     type: object
+  internal_cultural.Craft:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      origin:
+        type: string
+      price:
+        type: string
+    type: object
+  internal_cultural.Dish:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      name_kashmiri:
+        type: string
+      name_urdu:
+        type: string
+      price_range:
+        type: string
+      vegetarian:
+        type: boolean
+      where_to_try:
+        type: string
+    type: object
+  internal_cultural.EtiquetteTip:
+    properties:
+      body:
+        type: string
+      category:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_cultural.Festival:
+    properties:
+      description:
+        type: string
+      duration:
+        type: string
+      id:
+        type: string
+      month:
+        type: integer
+      name:
+        type: string
+      region:
+        type: string
+    type: object
   internal_destination.AdminDest:
     properties:
       activities:
@@ -366,6 +422,92 @@ definitions:
       uniqueness:
         type: string
     type: object
+  internal_image.Image:
+    properties:
+      blurhash:
+        type: string
+      caption:
+        type: string
+      created_at:
+        type: string
+      destination_id:
+        type: string
+      id:
+        type: string
+      is_hero:
+        type: boolean
+      sort_order:
+        type: integer
+      trek_id:
+        type: string
+      url:
+        type: string
+    type: object
+  internal_image.ImageInput:
+    properties:
+      blurhash:
+        type: string
+      caption:
+        type: string
+      destination_id:
+        type: string
+      is_hero:
+        type: boolean
+      sort_order:
+        type: integer
+      trek_id:
+        type: string
+      url:
+        type: string
+    type: object
+  internal_permit.Permit:
+    properties:
+      cost_inr:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      office:
+        type: string
+      official_url:
+        type: string
+      processing_days:
+        type: string
+      required:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      validity:
+        type: string
+    type: object
+  internal_permit.PermitInput:
+    properties:
+      cost_inr:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      office:
+        type: string
+      official_url:
+        type: string
+      processing_days:
+        type: string
+      required:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      validity:
+        type: string
+    type: object
   internal_provider.Provider:
     properties:
       amenities:
@@ -654,6 +796,37 @@ definitions:
         type: string
       slug:
         type: string
+    type: object
+  internal_weather.Snapshot:
+    properties:
+      aqi:
+        type: integer
+      cached:
+        type: boolean
+      condition:
+        type: string
+      feels_like_c:
+        type: number
+      humidity_pct:
+        type: integer
+      lat:
+        type: number
+      lng:
+        type: number
+      precip_mm:
+        type: number
+      slug:
+        type: string
+      source:
+        type: string
+      sunrise:
+        type: string
+      sunset:
+        type: string
+      temp_c:
+        type: number
+      wind_kmh:
+        type: number
     type: object
 info:
   contact: {}
@@ -965,6 +1138,170 @@ paths:
       summary: Restore a soft-deleted destination (admin)
       tags:
       - admin-destinations
+  /v1/admin/images:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Image
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_image.ImageInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create an image record (admin)
+      tags:
+      - admin-images
+  /v1/admin/images/{id}:
+    delete:
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete an image (admin)
+      tags:
+      - admin-images
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_image.ImageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update image metadata (caption/hero/order) (admin)
+      tags:
+      - admin-images
+  /v1/admin/permits:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Permit
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_permit.PermitInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a permit (admin)
+      tags:
+      - admin-permits
+  /v1/admin/permits/{id}:
+    delete:
+      parameters:
+      - description: Permit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a permit (admin)
+      tags:
+      - admin-permits
+    get:
+      parameters:
+      - description: Permit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_permit.Permit'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a permit (admin)
+      tags:
+      - admin-permits
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Permit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Permit
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_permit.PermitInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a permit (admin)
+      tags:
+      - admin-permits
   /v1/admin/providers:
     post:
       consumes:
@@ -1342,6 +1679,82 @@ paths:
       summary: Category detail (admin)
       tags:
       - taxonomy
+  /v1/cultural/crafts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_cultural.Craft'
+                  type: array
+              type: object
+      summary: List handicrafts
+      tags:
+      - cultural
+  /v1/cultural/etiquette:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_cultural.EtiquetteTip'
+                  type: array
+              type: object
+      summary: List etiquette tips
+      tags:
+      - cultural
+  /v1/cultural/festivals:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_cultural.Festival'
+                  type: array
+              type: object
+      summary: List festivals
+      tags:
+      - cultural
+  /v1/cultural/food:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_cultural.Dish'
+                  type: array
+              type: object
+      summary: List Wazwan dishes
+      tags:
+      - cultural
   /v1/destinations:
     get:
       parameters:
@@ -1510,6 +1923,56 @@ paths:
       summary: Trending destinations
       tags:
       - destinations
+  /v1/images/destination/{id}:
+    get:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_image.Image'
+                  type: array
+              type: object
+      summary: List images for a destination
+      tags:
+      - images
+  /v1/images/trek/{id}:
+    get:
+      parameters:
+      - description: Trek ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_image.Image'
+                  type: array
+              type: object
+      summary: List images for a trek
+      tags:
+      - images
   /v1/itineraries:
     get:
       produces:
@@ -1613,6 +2076,54 @@ paths:
       summary: Update current user profile (not yet implemented)
       tags:
       - user
+  /v1/permits:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_permit.Permit'
+                  type: array
+              type: object
+      summary: List permits
+      tags:
+      - permits
+  /v1/permits/check:
+    get:
+      parameters:
+      - description: CSV of destination slugs
+        in: query
+        name: destinations
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_permit.Permit'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Permits required for a set of destinations
+      tags:
+      - permits
   /v1/providers:
     get:
       parameters:
@@ -1859,6 +2370,33 @@ paths:
       summary: Get a trek's densified polyline + waypoints (offline nav)
       tags:
       - treks
+  /v1/weather/destination/{slug}:
+    get:
+      parameters:
+      - description: Destination slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_weather.Snapshot'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Current weather for a destination
+      tags:
+      - weather
 securityDefinitions:
   BearerAuth:
     in: header
