@@ -51,7 +51,14 @@ func scanProvider(row interface {
 	return p, err
 }
 
-// GET /v1/providers ?type=houseboat&verified=true
+// List godoc
+// @Summary  List providers
+// @Tags     providers
+// @Produce  json
+// @Param    type     query string false "Filter by type (houseboat, shikara, guide, pony, cab, heli)"
+// @Param    verified query bool   false "Only verified providers"
+// @Success  200 {object} response.Envelope{data=[]provider.Provider}
+// @Router   /v1/providers [get]
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	typ := q.Get("type")
@@ -81,7 +88,14 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/providers/{id}
+// Get godoc
+// @Summary  Get a provider
+// @Tags     providers
+// @Produce  json
+// @Param    id path string true "Provider ID"
+// @Success  200 {object} response.Envelope{data=provider.Provider}
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/providers/{id} [get]
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	p, err := scanProvider(s.pool.QueryRow(r.Context(), `
@@ -94,6 +108,14 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, p)
 }
 
+// AdminVerify godoc
+// @Summary  Verify a provider (admin)
+// @Tags     admin-providers
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Provider ID"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/providers/{id}/verify [post]
 func (s *Service) AdminVerify(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `UPDATE providers SET verified = true WHERE id = $1`, id)
@@ -106,10 +128,10 @@ func (s *Service) AdminVerify(w http.ResponseWriter, r *http.Request) {
 
 // ─── Admin CRUD ────────────────────────────────────────────────
 
-// providerInput is the writable shape accepted from the admin panel. Optional
+// ProviderInput is the writable shape accepted from the admin panel. Optional
 // text fields are normalised to NULL when blank; numeric optionals arrive as
 // pointers so an omitted value stays NULL rather than 0.
-type providerInput struct {
+type ProviderInput struct {
 	Type             string   `json:"type"`
 	Name             string   `json:"name"`
 	JktdcRegNo       string   `json:"jktdc_reg_no"`
@@ -132,7 +154,7 @@ type providerInput struct {
 
 // decode reads + validates the body and applies sane defaults for the NOT NULL
 // columns (type, price_unit) so the admin's partial payloads insert cleanly.
-func (in *providerInput) decode(r *http.Request) error {
+func (in *ProviderInput) decode(r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(in); err != nil {
 		return err
 	}
@@ -146,9 +168,18 @@ func (in *providerInput) decode(r *http.Request) error {
 	return nil
 }
 
-// POST /v1/admin/providers
+// AdminCreate godoc
+// @Summary  Create a provider (admin)
+// @Tags     admin-providers
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body provider.ProviderInput true "Provider"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/providers [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
-	var in providerInput
+	var in ProviderInput
 	if err := in.decode(r); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -174,10 +205,21 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
-// PUT /v1/admin/providers/{id}
+// AdminUpdate godoc
+// @Summary  Update a provider (admin)
+// @Tags     admin-providers
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string         true "Provider ID"
+// @Param    body body provider.ProviderInput true "Provider"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/admin/providers/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var in providerInput
+	var in ProviderInput
 	if err := in.decode(r); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -207,7 +249,13 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"id": id})
 }
 
-// DELETE /v1/admin/providers/{id}
+// AdminDelete godoc
+// @Summary  Delete a provider (admin)
+// @Tags     admin-providers
+// @Security BearerAuth
+// @Param    id path string true "Provider ID"
+// @Success  204
+// @Router   /v1/admin/providers/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM providers WHERE id = $1`, id)

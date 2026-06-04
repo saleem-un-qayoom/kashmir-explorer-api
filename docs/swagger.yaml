@@ -324,6 +324,94 @@ definitions:
       uniqueness:
         type: string
     type: object
+  internal_provider.Provider:
+    properties:
+      amenities:
+        items:
+          type: string
+        type: array
+      base_location_text:
+        type: string
+      cancellation:
+        type: string
+      capacity:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      jktdc_reg_no:
+        type: string
+      languages:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      phone:
+        type: string
+      price_inr:
+        type: integer
+      price_unit:
+        type: string
+      rating:
+        type: number
+      response_time_min:
+        type: integer
+      review_count:
+        type: integer
+      type:
+        type: string
+      verified:
+        type: boolean
+      whatsapp:
+        type: string
+      years_hosting:
+        type: integer
+    type: object
+  internal_provider.ProviderInput:
+    properties:
+      amenities:
+        items:
+          type: string
+        type: array
+      base_location_text:
+        type: string
+      cancellation:
+        type: string
+      capacity:
+        type: integer
+      description:
+        type: string
+      jktdc_reg_no:
+        type: string
+      languages:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      phone:
+        type: string
+      price_inr:
+        type: integer
+      price_unit:
+        type: string
+      rating:
+        type: number
+      response_time_min:
+        type: integer
+      review_count:
+        type: integer
+      type:
+        type: string
+      verified:
+        type: boolean
+      whatsapp:
+        type: string
+      years_hosting:
+        type: integer
+    type: object
   internal_user.Itinerary:
     properties:
       created_at:
@@ -606,6 +694,104 @@ paths:
       summary: Restore a soft-deleted destination (admin)
       tags:
       - admin-destinations
+  /v1/admin/providers:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Provider
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_provider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a provider (admin)
+      tags:
+      - admin-providers
+  /v1/admin/providers/{id}:
+    delete:
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a provider (admin)
+      tags:
+      - admin-providers
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Provider
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_provider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a provider (admin)
+      tags:
+      - admin-providers
+  /v1/admin/providers/{id}/verify:
+    post:
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Verify a provider (admin)
+      tags:
+      - admin-providers
   /v1/admin/regions:
     post:
       consumes:
@@ -985,6 +1171,61 @@ paths:
       summary: Update current user profile (not yet implemented)
       tags:
       - user
+  /v1/providers:
+    get:
+      parameters:
+      - description: Filter by type (houseboat, shikara, guide, pony, cab, heli)
+        in: query
+        name: type
+        type: string
+      - description: Only verified providers
+        in: query
+        name: verified
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_provider.Provider'
+                  type: array
+              type: object
+      summary: List providers
+      tags:
+      - providers
+  /v1/providers/{id}:
+    get:
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_provider.Provider'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Get a provider
+      tags:
+      - providers
   /v1/regions:
     get:
       produces:

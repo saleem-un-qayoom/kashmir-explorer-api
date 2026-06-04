@@ -19,10 +19,10 @@ func TestNz(t *testing.T) {
 	}
 }
 
-func decodeBody(t *testing.T, body string) (providerInput, error) {
+func decodeBody(t *testing.T, body string) (ProviderInput, error) {
 	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
-	var in providerInput
+	var in ProviderInput
 	err := in.decode(r)
 	return in, err
 }
