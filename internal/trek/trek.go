@@ -45,7 +45,15 @@ type Trek struct {
 	HeroImageURL   *string  `json:"hero_image_url,omitempty"` // joined from images
 }
 
-// GET /v1/treks ?difficulty=&duration=&type=&open=
+// List godoc
+// @Summary  List treks
+// @Tags     treks
+// @Produce  json
+// @Param    difficulty query string false "Filter by difficulty"
+// @Param    open       query bool   false "Only treks with status=open"
+// @Param    limit      query int    false "Page size (default 50)"
+// @Success  200 {object} response.Envelope{data=[]trek.Trek}
+// @Router   /v1/treks [get]
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	difficulty := q.Get("difficulty")
@@ -96,7 +104,14 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/treks/{slug}
+// Get godoc
+// @Summary  Get a trek (detail, with waypoints/gear/sections)
+// @Tags     treks
+// @Produce  json
+// @Param    slug path string true "Trek slug"
+// @Success  200 {object} response.Envelope{data=trek.Trek}
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/treks/{slug} [get]
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	var t Trek
@@ -160,7 +175,14 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, flat)
 }
 
-// GET /v1/treks/{slug}/path — densified polyline + waypoints for offline nav.
+// Path godoc
+// @Summary  Get a trek's densified polyline + waypoints (offline nav)
+// @Tags     treks
+// @Produce  json
+// @Param    slug path string true "Trek slug"
+// @Success  200 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/treks/{slug}/path [get]
 func (s *Service) Path(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
@@ -229,6 +251,16 @@ type AdminTrek struct {
 	RouteType      *string  `json:"route_type"`
 }
 
+// AdminCreate godoc
+// @Summary  Create a trek (admin)
+// @Tags     admin-treks
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body trek.AdminTrek true "Trek"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/treks [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	var in AdminTrek
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
@@ -266,6 +298,17 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]string{"id": id})
 }
 
+// AdminUpdate godoc
+// @Summary  Update a trek (admin)
+// @Tags     admin-treks
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string        true "Trek ID"
+// @Param    body body trek.AdminTrek true "Trek"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/treks/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var in AdminTrek
@@ -300,6 +343,14 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"updated": id})
 }
 
+// AdminGet godoc
+// @Summary  Get a trek for editing (admin)
+// @Tags     admin-treks
+// @Security BearerAuth
+// @Produce  json
+// @Param    id path string true "Trek ID"
+// @Success  200 {object} response.Envelope{data=trek.AdminTrek}
+// @Router   /v1/admin/treks/{id} [get]
 func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var t AdminTrek
@@ -331,7 +382,13 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, t)
 }
 
-// GET /admin/treks — list all treks including unpublished
+// AdminList godoc
+// @Summary  List all treks incl. unpublished (admin)
+// @Tags     admin-treks
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=[]trek.AdminTrek}
+// @Router   /v1/admin/treks [get]
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, slug, name, difficulty, trek_type, duration_days, distance_km,
@@ -363,6 +420,13 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
+// AdminDelete godoc
+// @Summary  Delete a trek (admin)
+// @Tags     admin-treks
+// @Security BearerAuth
+// @Param    id path string true "Trek ID"
+// @Success  204
+// @Router   /v1/admin/treks/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, err := s.pool.Exec(r.Context(), `DELETE FROM treks WHERE id = $1`, id)

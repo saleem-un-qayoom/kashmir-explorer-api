@@ -34,7 +34,14 @@ type Advisory struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-// GET /v1/advisories
+// List godoc
+// @Summary  List active advisories
+// @Tags     advisories
+// @Produce  json
+// @Param    severity query string false "Filter by severity (critical, warning, info)"
+// @Param    category query string false "Filter by category"
+// @Success  200 {object} response.Envelope{data=[]advisory.Advisory}
+// @Router   /v1/advisories [get]
 func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	rows, err := s.pool.Query(r.Context(), `
@@ -64,7 +71,13 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/advisories/destination/{id}
+// ForDestination godoc
+// @Summary  List advisories affecting a destination
+// @Tags     advisories
+// @Produce  json
+// @Param    id path string true "Destination ID"
+// @Success  200 {object} response.Envelope{data=[]advisory.Advisory}
+// @Router   /v1/advisories/destination/{id} [get]
 func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	rows, err := s.pool.Query(r.Context(), `
@@ -92,7 +105,12 @@ func (s *Service) ForDestination(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/roads/status
+// RoadStatus godoc
+// @Summary  List road / mountain-pass statuses
+// @Tags     advisories
+// @Produce  json
+// @Success  200 {object} response.Envelope
+// @Router   /v1/roads/status [get]
 func (s *Service) RoadStatus(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, name, slug, current_status, closure_reason, last_checked
@@ -122,7 +140,7 @@ func (s *Service) RoadStatus(w http.ResponseWriter, r *http.Request) {
 
 /* ─── Admin ──────────────────────────────────────────────── */
 
-type adminAdvisory struct {
+type AdminAdvisoryInput struct {
 	Severity   string  `json:"severity"`
 	Category   string  `json:"category"`
 	Title      string  `json:"title"`
@@ -133,9 +151,18 @@ type adminAdvisory struct {
 	ValidHours int     `json:"valid_hours"`
 }
 
-// POST /v1/admin/advisories — creates + broadcasts via WebSocket.
+// AdminCreate godoc
+// @Summary  Create + broadcast an advisory (admin)
+// @Tags     admin-advisories
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body advisory.AdminAdvisoryInput true "Advisory"
+// @Success  201 {object} response.Envelope{data=advisory.Advisory}
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/admin/advisories [post]
 func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
-	var body adminAdvisory
+	var body AdminAdvisoryInput
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -172,9 +199,19 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, a)
 }
 
+// AdminUpdate godoc
+// @Summary  Update an advisory (admin)
+// @Tags     admin-advisories
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string                      true "Advisory ID"
+// @Param    body body advisory.AdminAdvisoryInput true "Advisory"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/advisories/{id} [put]
 func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var body adminAdvisory
+	var body AdminAdvisoryInput
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -191,6 +228,13 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]bool{"updated": true})
 }
 
+// AdminDelete godoc
+// @Summary  Expire (clear) an advisory (admin)
+// @Tags     admin-advisories
+// @Security BearerAuth
+// @Param    id path string true "Advisory ID"
+// @Success  204
+// @Router   /v1/admin/advisories/{id} [delete]
 func (s *Service) AdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if _, err := s.pool.Exec(r.Context(),

@@ -15,6 +15,132 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/admin/advisories": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-advisories"
+                ],
+                "summary": "Create + broadcast an advisory (admin)",
+                "parameters": [
+                    {
+                        "description": "Advisory",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_advisory.AdminAdvisoryInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_advisory.Advisory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/advisories/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-advisories"
+                ],
+                "summary": "Update an advisory (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advisory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Advisory",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_advisory.AdminAdvisoryInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-advisories"
+                ],
+                "summary": "Expire (clear) an advisory (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advisory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/v1/admin/categories": {
             "post": {
                 "security": [
@@ -660,6 +786,297 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/admin/treks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-treks"
+                ],
+                "summary": "List all treks incl. unpublished (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_trek.AdminTrek"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-treks"
+                ],
+                "summary": "Create a trek (admin)",
+                "parameters": [
+                    {
+                        "description": "Trek",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_trek.AdminTrek"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/treks/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-treks"
+                ],
+                "summary": "Get a trek for editing (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_trek.AdminTrek"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-treks"
+                ],
+                "summary": "Update a trek (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Trek",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_trek.AdminTrek"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-treks"
+                ],
+                "summary": "Delete a trek (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/advisories": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "advisories"
+                ],
+                "summary": "List active advisories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by severity (critical, warning, info)",
+                        "name": "severity",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by category",
+                        "name": "category",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_advisory.Advisory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/advisories/destination/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "advisories"
+                ],
+                "summary": "List advisories affecting a destination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Destination ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_advisory.Advisory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
@@ -1371,6 +1788,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/roads/status": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "advisories"
+                ],
+                "summary": "List road / mountain-pass statuses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/saved": {
             "get": {
                 "security": [
@@ -1467,6 +1903,140 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/treks": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "treks"
+                ],
+                "summary": "List treks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by difficulty",
+                        "name": "difficulty",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only treks with status=open",
+                        "name": "open",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_trek.Trek"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "treks"
+                ],
+                "summary": "Get a trek (detail, with waypoints/gear/sections)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_trek.Trek"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}/path": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "treks"
+                ],
+                "summary": "Get a trek's densified polyline + waypoints (offline nav)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1481,6 +2051,70 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "meta": {}
+            }
+        },
+        "internal_advisory.AdminAdvisoryInput": {
+            "type": "object",
+            "properties": {
+                "affected": {
+                    "type": "string"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "integer"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "valid_hours": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_advisory.Advisory": {
+            "type": "object",
+            "properties": {
+                "affected": {
+                    "type": "string"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "valid_until": {
+                    "type": "string"
+                }
             }
         },
         "internal_destination.AdminDest": {
@@ -2090,6 +2724,236 @@ const docTemplate = `{
                 },
                 "years_hosting": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_trek.AdminTrek": {
+            "type": "object",
+            "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ams_risk": {
+                    "type": "boolean"
+                },
+                "best_months": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "closure_reason": {
+                    "type": "string"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "distance_km": {
+                    "type": "number"
+                },
+                "duration_days": {
+                    "type": "integer"
+                },
+                "elevation_gain_m": {
+                    "type": "integer"
+                },
+                "end_point": {
+                    "type": "string"
+                },
+                "features": {
+                    "description": "AllTrails-style discovery (migration 0009)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gear_list": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "guide_available": {
+                    "type": "boolean"
+                },
+                "guide_price_inr": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "max_altitude_m": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "path_geojson": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "path_phases": {
+                    "description": "[{day, coordinates: [[lng,lat],…]}]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "permits": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "review_count": {
+                    "type": "integer"
+                },
+                "route_type": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "start_point": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tagline": {
+                    "type": "string"
+                },
+                "trail_sections": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "trek_type": {
+                    "type": "string"
+                },
+                "uniqueness": {
+                    "type": "string"
+                },
+                "waypoint_coords": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "waypoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "internal_trek.Trek": {
+            "type": "object",
+            "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ams_risk": {
+                    "type": "boolean"
+                },
+                "best_months": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "closure_reason": {
+                    "type": "string"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "distance_km": {
+                    "type": "number"
+                },
+                "duration_days": {
+                    "type": "integer"
+                },
+                "elevation_gain_m": {
+                    "type": "integer"
+                },
+                "end_point": {
+                    "type": "string"
+                },
+                "features": {
+                    "description": "AllTrails-style discovery (migration 0009)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "guide_available": {
+                    "type": "boolean"
+                },
+                "guide_price_inr": {
+                    "type": "integer"
+                },
+                "hero_image_url": {
+                    "description": "joined from images",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_altitude_m": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permits": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "review_count": {
+                    "type": "integer"
+                },
+                "route_type": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "start_point": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tagline": {
+                    "type": "string"
+                },
+                "trek_type": {
+                    "type": "string"
+                },
+                "uniqueness": {
+                    "type": "string"
                 }
             }
         },

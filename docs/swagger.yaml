@@ -9,6 +9,48 @@ definitions:
         type: string
       meta: {}
     type: object
+  internal_advisory.AdminAdvisoryInput:
+    properties:
+      affected:
+        type: string
+      body:
+        type: string
+      category:
+        type: string
+      confidence:
+        type: integer
+      severity:
+        type: string
+      source:
+        type: string
+      title:
+        type: string
+      valid_hours:
+        type: integer
+    type: object
+  internal_advisory.Advisory:
+    properties:
+      affected:
+        type: string
+      body:
+        type: string
+      category:
+        type: string
+      confidence:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      severity:
+        type: string
+      source:
+        type: string
+      title:
+        type: string
+      valid_until:
+        type: string
+    type: object
   internal_destination.AdminDest:
     properties:
       activities:
@@ -412,6 +454,160 @@ definitions:
       years_hosting:
         type: integer
     type: object
+  internal_trek.AdminTrek:
+    properties:
+      activities:
+        items:
+          type: string
+        type: array
+      ams_risk:
+        type: boolean
+      best_months:
+        items:
+          type: integer
+        type: array
+      closure_reason:
+        type: string
+      difficulty:
+        type: string
+      distance_km:
+        type: number
+      duration_days:
+        type: integer
+      elevation_gain_m:
+        type: integer
+      end_point:
+        type: string
+      features:
+        description: AllTrails-style discovery (migration 0009)
+        items:
+          type: string
+        type: array
+      gear_list:
+        items:
+          type: integer
+        type: array
+      guide_available:
+        type: boolean
+      guide_price_inr:
+        type: integer
+      id:
+        type: string
+      is_published:
+        type: boolean
+      max_altitude_m:
+        type: integer
+      name:
+        type: string
+      path_geojson:
+        items:
+          type: integer
+        type: array
+      path_phases:
+        description: '[{day, coordinates: [[lng,lat],…]}]'
+        items:
+          type: integer
+        type: array
+      permits:
+        items:
+          type: string
+        type: array
+      rating:
+        type: number
+      review_count:
+        type: integer
+      route_type:
+        type: string
+      slug:
+        type: string
+      start_point:
+        type: string
+      status:
+        type: string
+      tagline:
+        type: string
+      trail_sections:
+        items:
+          type: integer
+        type: array
+      trek_type:
+        type: string
+      uniqueness:
+        type: string
+      waypoint_coords:
+        items:
+          type: integer
+        type: array
+      waypoints:
+        items:
+          type: integer
+        type: array
+    type: object
+  internal_trek.Trek:
+    properties:
+      activities:
+        items:
+          type: string
+        type: array
+      ams_risk:
+        type: boolean
+      best_months:
+        items:
+          type: integer
+        type: array
+      closure_reason:
+        type: string
+      difficulty:
+        type: string
+      distance_km:
+        type: number
+      duration_days:
+        type: integer
+      elevation_gain_m:
+        type: integer
+      end_point:
+        type: string
+      features:
+        description: AllTrails-style discovery (migration 0009)
+        items:
+          type: string
+        type: array
+      guide_available:
+        type: boolean
+      guide_price_inr:
+        type: integer
+      hero_image_url:
+        description: joined from images
+        type: string
+      id:
+        type: string
+      max_altitude_m:
+        type: integer
+      name:
+        type: string
+      permits:
+        items:
+          type: string
+        type: array
+      rating:
+        type: number
+      review_count:
+        type: integer
+      route_type:
+        type: string
+      slug:
+        type: string
+      start_point:
+        type: string
+      status:
+        type: string
+      tagline:
+        type: string
+      trek_type:
+        type: string
+      uniqueness:
+        type: string
+    type: object
   internal_user.Itinerary:
     properties:
       created_at:
@@ -465,6 +661,81 @@ info:
   title: Kashmir Explorer API
   version: 0.1.0
 paths:
+  /v1/admin/advisories:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Advisory
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_advisory.AdminAdvisoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_advisory.Advisory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create + broadcast an advisory (admin)
+      tags:
+      - admin-advisories
+  /v1/admin/advisories/{id}:
+    delete:
+      parameters:
+      - description: Advisory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Expire (clear) an advisory (admin)
+      tags:
+      - admin-advisories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Advisory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Advisory
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_advisory.AdminAdvisoryInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update an advisory (admin)
+      tags:
+      - admin-advisories
   /v1/admin/categories:
     post:
       consumes:
@@ -858,6 +1129,177 @@ paths:
       summary: Update a region (admin)
       tags:
       - taxonomy
+  /v1/admin/treks:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_trek.AdminTrek'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all treks incl. unpublished (admin)
+      tags:
+      - admin-treks
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trek
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_trek.AdminTrek'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a trek (admin)
+      tags:
+      - admin-treks
+  /v1/admin/treks/{id}:
+    delete:
+      parameters:
+      - description: Trek ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a trek (admin)
+      tags:
+      - admin-treks
+    get:
+      parameters:
+      - description: Trek ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_trek.AdminTrek'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a trek for editing (admin)
+      tags:
+      - admin-treks
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trek ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Trek
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_trek.AdminTrek'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a trek (admin)
+      tags:
+      - admin-treks
+  /v1/advisories:
+    get:
+      parameters:
+      - description: Filter by severity (critical, warning, info)
+        in: query
+        name: severity
+        type: string
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_advisory.Advisory'
+                  type: array
+              type: object
+      summary: List active advisories
+      tags:
+      - advisories
+  /v1/advisories/destination/{id}:
+    get:
+      parameters:
+      - description: Destination ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_advisory.Advisory'
+                  type: array
+              type: object
+      summary: List advisories affecting a destination
+      tags:
+      - advisories
   /v1/categories:
     get:
       produces:
@@ -1268,6 +1710,18 @@ paths:
       summary: Region detail (admin)
       tags:
       - taxonomy
+  /v1/roads/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: List road / mountain-pass statuses
+      tags:
+      - advisories
   /v1/saved:
     get:
       produces:
@@ -1324,6 +1778,87 @@ paths:
       summary: Save a destination
       tags:
       - user
+  /v1/treks:
+    get:
+      parameters:
+      - description: Filter by difficulty
+        in: query
+        name: difficulty
+        type: string
+      - description: Only treks with status=open
+        in: query
+        name: open
+        type: boolean
+      - description: Page size (default 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_trek.Trek'
+                  type: array
+              type: object
+      summary: List treks
+      tags:
+      - treks
+  /v1/treks/{slug}:
+    get:
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_trek.Trek'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Get a trek (detail, with waypoints/gear/sections)
+      tags:
+      - treks
+  /v1/treks/{slug}/path:
+    get:
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Get a trek's densified polyline + waypoints (offline nav)
+      tags:
+      - treks
 securityDefinitions:
   BearerAuth:
     in: header
