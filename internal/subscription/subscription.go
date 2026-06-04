@@ -40,7 +40,26 @@ type subscribeReq struct {
 	Plan string `json:"plan"` // 'monthly' | 'yearly'
 }
 
-// POST /v1/me/subscribe
+// Subscription doc-models (OpenAPI/codegen).
+type SubscribeInput struct {
+	Plan string `json:"plan"` // 'monthly' | 'yearly'
+}
+type Subscription struct {
+	Plan             string  `json:"plan,omitempty"`
+	Status           string  `json:"status"`
+	CurrentPeriodEnd *string `json:"current_period_end,omitempty"`
+}
+
+// Subscribe godoc
+// @Summary  Start a premium subscription (Razorpay)
+// @Tags     subscriptions
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    body body subscription.SubscribeInput true "Plan"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/me/subscribe [post]
 func (s *Service) Subscribe(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var body subscribeReq
@@ -81,7 +100,13 @@ func (s *Service) Subscribe(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /v1/me/subscription
+// Get godoc
+// @Summary  Get the current user's subscription
+// @Tags     subscriptions
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope{data=subscription.Subscription}
+// @Router   /v1/me/subscription [get]
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var plan, status string
@@ -101,7 +126,14 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /v1/me/cancel-sub
+// Cancel godoc
+// @Summary  Cancel the current subscription (at period end)
+// @Tags     subscriptions
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/me/cancel-sub [post]
 func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 	userID := mw.UserID(r)
 	var rpID string

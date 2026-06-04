@@ -19,7 +19,7 @@ type Service struct{ pool *pgxpool.Pool }
 
 func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
-type createReq struct {
+type ReportInput struct {
 	Category string `json:"category"` // V2: wrong_path | blocked | unsafe | wildlife | other
 	// V3: snow | trail | water
 	Body        string  `json:"body"`
@@ -30,11 +30,40 @@ type createReq struct {
 	WaypointIdx *int    `json:"waypoint_idx"` // V3 · 0-based on the trek polyline
 }
 
-// POST /v1/treks/{slug}/report
+// TrailReport documents a community trail report (OpenAPI/codegen). Admin-only
+// fields (status/trek_slug/lat/…) are present on the admin queue responses.
+type TrailReport struct {
+	ID          string   `json:"id"`
+	Category    string   `json:"category"`
+	Severity    int      `json:"severity"`
+	Body        *string  `json:"body,omitempty"`
+	PhotoURL    *string  `json:"photo_url,omitempty"`
+	WaypointIdx *int     `json:"waypoint_idx,omitempty"`
+	CreatedAt   string   `json:"created_at"`
+	Reporter    *string  `json:"reporter,omitempty"`
+	Status      string   `json:"status,omitempty"`
+	TrekSlug    string   `json:"trek_slug,omitempty"`
+	TrekName    string   `json:"trek_name,omitempty"`
+	Lat         *float64 `json:"lat,omitempty"`
+	Lng         *float64 `json:"lng,omitempty"`
+	ExpiresAt   *string  `json:"expires_at,omitempty"`
+}
+
+// Create godoc
+// @Summary  File a trail-condition report
+// @Tags     reports
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    slug path string            true "Trek slug"
+// @Param    body body report.ReportInput true "Report"
+// @Success  201 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Router   /v1/treks/{slug}/report [post]
 func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	userID := mw.UserID(r)
-	var body createReq
+	var body ReportInput
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.BadRequest(w, "invalid body")
 		return
@@ -82,8 +111,13 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	response.Created(w, map[string]any{"id": id, "status": "open", "severity": sev})
 }
 
-// GET /v1/treks/{slug}/reports — public feed of unresolved community
-// trail-conditions for a trek. Auto-hides expired (>14d).
+// PublicList godoc
+// @Summary  Public feed of a trek's trail-condition reports
+// @Tags     reports
+// @Produce  json
+// @Param    slug path string true "Trek slug"
+// @Success  200 {object} response.Envelope{data=[]report.TrailReport}
+// @Router   /v1/treks/{slug}/reports [get]
 func (s *Service) PublicList(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
@@ -127,7 +161,14 @@ func (s *Service) PublicList(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-// GET /v1/admin/reports
+// AdminList godoc
+// @Summary  Admin report queue
+// @Tags     admin-reports
+// @Security BearerAuth
+// @Produce  json
+// @Param    status query string false "Filter by status (open/reviewing/resolved/dismissed)"
+// @Success  200 {object} response.Envelope{data=[]report.TrailReport}
+// @Router   /v1/admin/reports [get]
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 	if status == "" {
@@ -176,15 +217,24 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, out)
 }
 
-type resolveReq struct {
+type ResolveInput struct {
 	Status    string `json:"status"` // resolved | dismissed
 	AdminNote string `json:"admin_note"`
 }
 
-// POST /v1/admin/reports/{id}/resolve
+// AdminResolve godoc
+// @Summary  Resolve or dismiss a report (admin)
+// @Tags     admin-reports
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string             true "Report ID"
+// @Param    body body report.ResolveInput true "Resolution"
+// @Success  200 {object} response.Envelope
+// @Router   /v1/admin/reports/{id}/resolve [post]
 func (s *Service) AdminResolve(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var body resolveReq
+	var body ResolveInput
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.BadRequest(w, "invalid body")
 		return

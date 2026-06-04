@@ -28,11 +28,24 @@ func NewService(pool *pgxpool.Pool, rooms *ws.Rooms) *Service {
 	return &Service{pool: pool, rooms: rooms}
 }
 
+// PingInput is the trek nav ping body (OpenAPI/codegen model).
+type PingInput struct {
+	AlongM int `json:"along_m"`
+}
+
 type pingReq struct {
 	AlongM int `json:"along_m"`
 }
 
-// POST /v1/treks/{slug}/ping — auth required. Append-only.
+// Ping godoc
+// @Summary  Report position along a trek (presence/density)
+// @Tags     crowd
+// @Security BearerAuth
+// @Accept   json
+// @Param    slug path string         true "Trek slug"
+// @Param    body body crowd.PingInput true "Along-track distance (m)"
+// @Success  204
+// @Router   /v1/treks/{slug}/ping [post]
 func (s *Service) Ping(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	userID := mw.UserID(r)
@@ -58,7 +71,13 @@ func (s *Service) Ping(w http.ResponseWriter, r *http.Request) {
 	response.NoContent(w)
 }
 
-// GET /v1/treks/{slug}/density — public anonymised snapshot.
+// Density godoc
+// @Summary  Live anonymised trekker density for a trek
+// @Tags     crowd
+// @Produce  json
+// @Param    slug path string true "Trek slug"
+// @Success  200 {object} response.Envelope{data=crowd.Density}
+// @Router   /v1/treks/{slug}/density [get]
 func (s *Service) Density(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	d, err := s.computeDensity(r.Context(), slug)

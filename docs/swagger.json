@@ -1272,6 +1272,98 @@
                 }
             }
         },
+        "/v1/admin/reports": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-reports"
+                ],
+                "summary": "Admin report queue",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by status (open/reviewing/resolved/dismissed)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_report.TrailReport"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/reports/{id}/resolve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-reports"
+                ],
+                "summary": "Resolve or dismiss a report (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resolution",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_report.ResolveInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/admin/treks": {
             "get": {
                 "security": [
@@ -2904,6 +2996,116 @@
                 }
             }
         },
+        "/v1/me/cancel-sub": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Cancel the current subscription (at period end)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/subscribe": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Start a premium subscription (Razorpay)",
+                "parameters": [
+                    {
+                        "description": "Plan",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_subscription.SubscribeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/subscription": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Get the current user's subscription",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_subscription.Subscription"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/permits": {
             "get": {
                 "produces": [
@@ -3441,6 +3643,46 @@
                 }
             }
         },
+        "/v1/treks/{slug}/density": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "crowd"
+                ],
+                "summary": "Live anonymised trekker density for a trek",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_crowd.Density"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/treks/{slug}/path": {
             "get": {
                 "produces": [
@@ -3470,6 +3712,139 @@
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}/ping": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "crowd"
+                ],
+                "summary": "Report position along a trek (presence/density)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Along-track distance (m)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_crowd.PingInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "File a trail-condition report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Report",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_report.ReportInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/treks/{slug}/reports": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Public feed of a trek's trail-condition reports",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trek slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_report.TrailReport"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -3843,6 +4218,29 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_crowd.Density": {
+            "type": "object",
+            "properties": {
+                "active_trekkers": {
+                    "type": "integer"
+                },
+                "ahead_of_user": {
+                    "description": "populated when ?along_m=",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_crowd.PingInput": {
+            "type": "object",
+            "properties": {
+                "along_m": {
+                    "type": "integer"
                 }
             }
         },
@@ -4740,6 +5138,96 @@
                 }
             }
         },
+        "internal_report.ReportInput": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "V3: snow | trail | water",
+                    "type": "string"
+                },
+                "category": {
+                    "description": "V2: wrong_path | blocked | unsafe | wildlife | other",
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "photo_url": {
+                    "description": "V3 · optional R2 upload",
+                    "type": "string"
+                },
+                "severity": {
+                    "description": "V3 · 1..5 chinar-leaf dial",
+                    "type": "integer"
+                },
+                "waypoint_idx": {
+                    "description": "V3 · 0-based on the trek polyline",
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_report.ResolveInput": {
+            "type": "object",
+            "properties": {
+                "admin_note": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "resolved | dismissed",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_report.TrailReport": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "reporter": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "trek_name": {
+                    "type": "string"
+                },
+                "trek_slug": {
+                    "type": "string"
+                },
+                "waypoint_idx": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_search.Result": {
             "type": "object",
             "properties": {
@@ -4790,6 +5278,29 @@
                 },
                 "vector_hit": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_subscription.SubscribeInput": {
+            "type": "object",
+            "properties": {
+                "plan": {
+                    "description": "'monthly' | 'yearly'",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_subscription.Subscription": {
+            "type": "object",
+            "properties": {
+                "current_period_end": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

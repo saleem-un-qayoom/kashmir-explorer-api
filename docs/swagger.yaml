@@ -194,6 +194,21 @@ definitions:
       type:
         type: string
     type: object
+  internal_crowd.Density:
+    properties:
+      active_trekkers:
+        type: integer
+      ahead_of_user:
+        description: populated when ?along_m=
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  internal_crowd.PingInput:
+    properties:
+      along_m:
+        type: integer
+    type: object
   internal_cultural.Craft:
     properties:
       description:
@@ -783,6 +798,67 @@ definitions:
       years_hosting:
         type: integer
     type: object
+  internal_report.ReportInput:
+    properties:
+      body:
+        description: 'V3: snow | trail | water'
+        type: string
+      category:
+        description: 'V2: wrong_path | blocked | unsafe | wildlife | other'
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      photo_url:
+        description: V3 · optional R2 upload
+        type: string
+      severity:
+        description: V3 · 1..5 chinar-leaf dial
+        type: integer
+      waypoint_idx:
+        description: V3 · 0-based on the trek polyline
+        type: integer
+    type: object
+  internal_report.ResolveInput:
+    properties:
+      admin_note:
+        type: string
+      status:
+        description: resolved | dismissed
+        type: string
+    type: object
+  internal_report.TrailReport:
+    properties:
+      body:
+        type: string
+      category:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      photo_url:
+        type: string
+      reporter:
+        type: string
+      severity:
+        type: integer
+      status:
+        type: string
+      trek_name:
+        type: string
+      trek_slug:
+        type: string
+      waypoint_idx:
+        type: integer
+    type: object
   internal_search.Result:
     properties:
       altitude_m:
@@ -817,6 +893,21 @@ definitions:
         type: array
       vector_hit:
         type: boolean
+    type: object
+  internal_subscription.SubscribeInput:
+    properties:
+      plan:
+        description: '''monthly'' | ''yearly'''
+        type: string
+    type: object
+  internal_subscription.Subscription:
+    properties:
+      current_period_end:
+        type: string
+      plan:
+        type: string
+      status:
+        type: string
     type: object
   internal_trek.AdminTrek:
     properties:
@@ -1816,6 +1907,60 @@ paths:
       summary: Re-embed rows missing a vector (admin)
       tags:
       - admin-search
+  /v1/admin/reports:
+    get:
+      parameters:
+      - description: Filter by status (open/reviewing/resolved/dismissed)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_report.TrailReport'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin report queue
+      tags:
+      - admin-reports
+  /v1/admin/reports/{id}/resolve:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Report ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resolution
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_report.ResolveInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Resolve or dismiss a report (admin)
+      tags:
+      - admin-reports
   /v1/admin/treks:
     get:
       produces:
@@ -2772,6 +2917,70 @@ paths:
       summary: Update current user profile (not yet implemented)
       tags:
       - user
+  /v1/me/cancel-sub:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Cancel the current subscription (at period end)
+      tags:
+      - subscriptions
+  /v1/me/subscribe:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Plan
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_subscription.SubscribeInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Start a premium subscription (Razorpay)
+      tags:
+      - subscriptions
+  /v1/me/subscription:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_subscription.Subscription'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get the current user's subscription
+      tags:
+      - subscriptions
   /v1/permits:
     get:
       produces:
@@ -3087,6 +3296,29 @@ paths:
       summary: Get a trek (detail, with waypoints/gear/sections)
       tags:
       - treks
+  /v1/treks/{slug}/density:
+    get:
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_crowd.Density'
+              type: object
+      summary: Live anonymised trekker density for a trek
+      tags:
+      - crowd
   /v1/treks/{slug}/path:
     get:
       parameters:
@@ -3109,6 +3341,87 @@ paths:
       summary: Get a trek's densified polyline + waypoints (offline nav)
       tags:
       - treks
+  /v1/treks/{slug}/ping:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Along-track distance (m)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_crowd.PingInput'
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Report position along a trek (presence/density)
+      tags:
+      - crowd
+  /v1/treks/{slug}/report:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Report
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_report.ReportInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: File a trail-condition report
+      tags:
+      - reports
+  /v1/treks/{slug}/reports:
+    get:
+      parameters:
+      - description: Trek slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_report.TrailReport'
+                  type: array
+              type: object
+      summary: Public feed of a trek's trail-condition reports
+      tags:
+      - reports
   /v1/weather/destination/{slug}:
     get:
       parameters:
