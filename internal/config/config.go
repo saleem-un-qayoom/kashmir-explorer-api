@@ -20,12 +20,18 @@ type Config struct {
 	OTP             OTPConfig
 	OAuth           OAuthConfig
 	Razorpay        RazorpayConfig
-	R2              R2Config
+	Supabase        SupabaseConfig
 	OpenWeatherKey  string
 	AnthropicKey    string
 	AnthropicModel  string
 	VoyageKey       string // text embeddings for pgvector
 	ApplePassTypeID string // Apple Wallet pass type identifier
+
+	// External advisory sources polled by internal/advisory. Set to an empty
+	// string to disable that source. Endpoints are not always stable — leave
+	// blank in dev if a source is misbehaving, the fetcher will skip it.
+	NDMAURL string
+	IMDURL  string
 }
 
 type JWTConfig struct {
@@ -54,8 +60,14 @@ type RazorpayConfig struct {
 	WebhookSecret string
 }
 
-type R2Config struct {
-	AccountID       string
+// SupabaseConfig configures Supabase Storage's S3-compatible endpoint.
+//
+//	ProjectRef — the project ref, i.e. the subdomain of *.supabase.co.
+//	Region     — the project's region (e.g. ap-south-1); used in SigV4.
+//	S3 access keys are created under Storage → Settings → S3 access keys.
+type SupabaseConfig struct {
+	ProjectRef      string
+	Region          string
 	AccessKeyID     string
 	SecretAccessKey string
 	Bucket          string
@@ -92,18 +104,22 @@ func Load() (*Config, error) {
 			KeySecret:     os.Getenv("RAZORPAY_KEY_SECRET"),
 			WebhookSecret: os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
 		},
-		R2: R2Config{
-			AccountID:       os.Getenv("R2_ACCOUNT_ID"),
-			AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
-			SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
-			Bucket:          env("R2_BUCKET", "kashmir-uploads"),
-			PublicBase:      env("R2_PUBLIC_BASE", ""),
+		Supabase: SupabaseConfig{
+			ProjectRef:      os.Getenv("SUPABASE_PROJECT_REF"),
+			Region:          env("SUPABASE_REGION", "ap-south-1"),
+			AccessKeyID:     os.Getenv("SUPABASE_S3_ACCESS_KEY_ID"),
+			SecretAccessKey: os.Getenv("SUPABASE_S3_SECRET_ACCESS_KEY"),
+			Bucket:          env("SUPABASE_BUCKET", "kashmir-uploads"),
+			PublicBase:      env("SUPABASE_PUBLIC_BASE", ""),
 		},
 		OpenWeatherKey:  os.Getenv("OPENWEATHERMAP_API_KEY"),
 		AnthropicKey:    os.Getenv("ANTHROPIC_API_KEY"),
 		AnthropicModel:  env("ANTHROPIC_MODEL", "claude-sonnet-4-7-20251101"),
 		VoyageKey:       os.Getenv("VOYAGE_API_KEY"),
 		ApplePassTypeID: env("APPLE_PASS_TYPE_ID", "pass.app.kashmir.explorer"),
+
+		NDMAURL: env("NDMA_URL", "https://sachet.ndma.gov.in/cap_public_website/getAllActiveWarnings"),
+		IMDURL:  env("IMD_URL", "https://mausam.imd.gov.in/backend/website/district-level-warning"),
 	}
 
 	if cfg.DatabaseURL == "" {

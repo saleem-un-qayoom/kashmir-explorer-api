@@ -20,6 +20,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/cultural"
 	"github.com/kashmir-explorer/api/internal/destination"
 	"github.com/kashmir-explorer/api/internal/groups"
+	"github.com/kashmir-explorer/api/internal/homehero"
 	"github.com/kashmir-explorer/api/internal/image"
 	"github.com/kashmir-explorer/api/internal/permit"
 	"github.com/kashmir-explorer/api/internal/photo"
@@ -65,12 +66,13 @@ func testDeps() Deps {
 		Cultural:     cultural.NewService(nil),
 		Photo:        photo.NewService(nil),
 		Permit:       permit.NewService(nil),
-		Upload:       upload.NewService(cfg.R2),
+		Upload:       upload.NewService(cfg.Supabase),
 		Sync:         syncpkg.NewService(nil),
 		Search:       search.NewService(nil, ""),
 		Crowd:        crowd.NewService(nil, rooms),
 		Groups:       groups.NewService(nil),
 		Image:        image.NewService(nil),
+		HomeHero:     homehero.NewService(nil),
 		Report:       report.NewService(nil),
 		Review:       review.NewService(nil),
 		Social:       social.NewService(nil),

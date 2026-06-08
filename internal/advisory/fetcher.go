@@ -31,16 +31,27 @@ import (
 
 // Fetcher polls external sources and upserts advisories.
 type Fetcher struct {
-	pool   *pgxpool.Pool
-	hub    *ws.Hub
-	client *http.Client
+	pool    *pgxpool.Pool
+	hub     *ws.Hub
+	client  *http.Client
+	ndmaURL string
+	imdURL  string
+
+	// Per-source state: tracks whether the source was healthy on the last
+	// poll so we only emit a log line on state transitions (down → up or
+	// up → down). Without this, a broken endpoint fills the log with an
+	// ERROR every poll cycle.
+	ndmaHealthy bool
+	imdHealthy  bool
 }
 
-func NewFetcher(pool *pgxpool.Pool, hub *ws.Hub) *Fetcher {
+func NewFetcher(pool *pgxpool.Pool, hub *ws.Hub, ndmaURL, imdURL string) *Fetcher {
 	return &Fetcher{
-		pool:   pool,
-		hub:    hub,
-		client: &http.Client{Timeout: 15 * time.Second},
+		pool:    pool,
+		hub:     hub,
+		client:  &http.Client{Timeout: 15 * time.Second},
+		ndmaURL: ndmaURL,
+		imdURL:  imdURL,
 	}
 }
 
@@ -65,6 +76,22 @@ func (f *Fetcher) runAll(ctx context.Context) {
 	log.Println("[advisory-fetcher] polling external sources…")
 	f.fetchNDMA(ctx)
 	f.fetchIMD(ctx)
+}
+
+// reportHealth flips a source's health flag and emits a single log line per
+// state transition. healthy=true means the last poll succeeded; healthy=false
+// means it failed (404, network, parse, etc). This keeps the log clean when
+// an upstream is persistently broken.
+func (f *Fetcher) reportHealth(source string, healthy bool, prev *bool, err error) {
+	if healthy == *prev {
+		return
+	}
+	*prev = healthy
+	if healthy {
+		log.Printf("[advisory-fetcher] %s: recovered", source)
+	} else {
+		log.Printf("[advisory-fetcher] %s: %v (will keep polling quietly until it recovers)", source, err)
+	}
 }
 
 /* ─── NDMA SACHET ─────────────────────────────────────────────────────────
@@ -95,10 +122,13 @@ type ndmaWarning struct {
 }
 
 func (f *Fetcher) fetchNDMA(ctx context.Context) {
-	const url = "https://sachet.ndma.gov.in/cap_public_website/getAllActiveWarnings"
+	url := f.ndmaURL
+	if url == "" {
+		return // source disabled via env (NDMA_URL="")
+	}
 	body, err := f.get(ctx, url)
 	if err != nil {
-		log.Printf("[advisory-fetcher] NDMA fetch error: %v", err)
+		f.reportHealth("NDMA", false, &f.ndmaHealthy, err)
 		return
 	}
 
@@ -162,7 +192,8 @@ func (f *Fetcher) fetchNDMA(ctx context.Context) {
 			}
 		}
 	}
-	log.Printf("[advisory-fetcher] NDMA: %d J&K advisories upserted", count)
+			log.Printf("[advisory-fetcher] NDMA: %d J&K advisories upserted", count)
+	f.reportHealth("NDMA", true, &f.ndmaHealthy, nil)
 }
 
 /* ─── IMD district weather warnings ──────────────────────────────────────
@@ -173,10 +204,13 @@ func (f *Fetcher) fetchNDMA(ctx context.Context) {
  */
 
 func (f *Fetcher) fetchIMD(ctx context.Context) {
-	const url = "https://mausam.imd.gov.in/backend/website/district-level-warning"
+	url := f.imdURL
+	if url == "" {
+		return // source disabled via env (IMD_URL="")
+	}
 	body, err := f.get(ctx, url)
 	if err != nil {
-		log.Printf("[advisory-fetcher] IMD fetch error: %v", err)
+		f.reportHealth("IMD", false, &f.imdHealthy, err)
 		return
 	}
 
@@ -238,7 +272,8 @@ func (f *Fetcher) fetchIMD(ctx context.Context) {
 			count++
 		}
 	}
-	log.Printf("[advisory-fetcher] IMD: %d J&K district warnings upserted", count)
+		log.Printf("[advisory-fetcher] IMD: %d J&K district warnings upserted", count)
+	f.reportHealth("IMD", true, &f.imdHealthy, nil)
 }
 
 /* ─── Upsert helper ───────────────────────────────────────────────────── */

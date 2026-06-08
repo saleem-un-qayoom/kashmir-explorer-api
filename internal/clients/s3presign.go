@@ -1,8 +1,9 @@
-// Package clients · Cloudflare R2 (S3-compatible) presigned URL generator.
+// Package clients · S3-compatible presigned URL generator.
 //
 // We sign PUT URLs server-side and hand them to the mobile client, which
-// uploads images directly to R2 without proxying through us. Egress is
-// free on R2.
+// uploads images directly to object storage without proxying through us.
+// The same SigV4 signer drives both Cloudflare R2 and Supabase Storage —
+// they differ only in host, region, and URL path prefix.
 package clients
 
 import (
@@ -16,30 +17,54 @@ import (
 	"time"
 )
 
-type R2 struct {
-	AccountID       string
+// S3Presigner signs PUT requests against any S3-compatible endpoint.
+//
+//	Host   — virtual host, e.g. "{ref}.storage.supabase.co".
+//	Region — the project region for Supabase.
+//	Prefix — path segment before /{bucket}/{key};
+//	         "/storage/v1/s3" for Supabase's S3 protocol endpoint.
+type S3Presigner struct {
+	Host            string
+	Region          string
+	Prefix          string
 	AccessKeyID     string
 	SecretAccessKey string
 	Bucket          string
 	PublicBase      string
 }
 
-func NewR2(accountID, ak, sk, bucket, publicBase string) *R2 {
-	return &R2{accountID, ak, sk, bucket, publicBase}
+// NewSupabaseStorage builds a presigner for Supabase Storage's S3-compatible
+// endpoint. When publicBase is empty it defaults to the bucket's public
+// object URL (valid only for buckets marked public in Supabase).
+func NewSupabaseStorage(projectRef, region, ak, sk, bucket, publicBase string) *S3Presigner {
+	host := fmt.Sprintf("%s.storage.supabase.co", projectRef)
+	if publicBase == "" {
+		publicBase = fmt.Sprintf("https://%s/storage/v1/object/public/%s", host, bucket)
+	}
+	return &S3Presigner{
+		Host:            host,
+		Region:          region,
+		Prefix:          "/storage/v1/s3",
+		AccessKeyID:     ak,
+		SecretAccessKey: sk,
+		Bucket:          bucket,
+		PublicBase:      publicBase,
+	}
 }
 
 // PresignPUT returns a 5-minute upload URL for the given key, plus the
 // publicly accessible URL after upload completes.
 //
-// Implementation: SigV4 signed PUT against r2.cloudflarestorage.com.
-func (r *R2) PresignPUT(ctx context.Context, key, contentType string) (uploadURL, publicURL string, err error) {
-	host := fmt.Sprintf("%s.r2.cloudflarestorage.com", r.AccountID)
-	endpoint := fmt.Sprintf("https://%s/%s/%s", host, r.Bucket, key)
+// Implementation: SigV4 signed PUT (path-style) against the configured host.
+func (r *S3Presigner) PresignPUT(ctx context.Context, key, contentType string) (uploadURL, publicURL string, err error) {
+	host := r.Host
+	canonicalURI := fmt.Sprintf("%s/%s/%s", r.Prefix, r.Bucket, key)
+	endpoint := "https://" + host + canonicalURI
 
 	now := time.Now().UTC()
 	ts := now.Format("20060102T150405Z")
 	date := now.Format("20060102")
-	region := "auto"
+	region := r.Region
 	service := "s3"
 	credScope := fmt.Sprintf("%s/%s/%s/aws4_request", date, region, service)
 
@@ -53,7 +78,6 @@ func (r *R2) PresignPUT(ctx context.Context, key, contentType string) (uploadURL
 		q.Set("response-content-type", contentType)
 	}
 
-	canonicalURI := fmt.Sprintf("/%s/%s", r.Bucket, key)
 	canonicalQuery := q.Encode()
 	canonicalHeaders := fmt.Sprintf("host:%s\n", host)
 

@@ -1,4 +1,4 @@
-// Package upload — R2 presigned upload URLs for the mobile app + admin.
+// Package upload — presigned upload URLs for the mobile app + admin.
 package upload
 
 import (
@@ -17,11 +17,11 @@ import (
 )
 
 type Service struct {
-	r2 *clients.R2
+	store *clients.S3Presigner
 }
 
-func NewService(cfg config.R2Config) *Service {
-	return &Service{r2: clients.NewR2(cfg.AccountID, cfg.AccessKeyID, cfg.SecretAccessKey, cfg.Bucket, cfg.PublicBase)}
+func NewService(cfg config.SupabaseConfig) *Service {
+	return &Service{store: clients.NewSupabaseStorage(cfg.ProjectRef, cfg.Region, cfg.AccessKeyID, cfg.SecretAccessKey, cfg.Bucket, cfg.PublicBase)}
 }
 
 type presignReq struct {
@@ -41,7 +41,7 @@ type PresignResult struct {
 }
 
 // Presign godoc
-// @Summary  Get a presigned R2 upload URL
+// @Summary  Get a presigned upload URL
 // @Tags     upload
 // @Security BearerAuth
 // @Accept   json
@@ -68,7 +68,7 @@ func (s *Service) Presign(w http.ResponseWriter, r *http.Request) {
 	// Key: uploads/{user-or-anon}/{ts}-{rand}-{cleanname}
 	key := buildKey(userID, body.Filename)
 
-	upload, public, err := s.r2.PresignPUT(r.Context(), key, body.ContentType)
+	upload, public, err := s.store.PresignPUT(r.Context(), key, body.ContentType)
 	if err != nil {
 		response.Internal(w, err)
 		return

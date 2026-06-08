@@ -31,7 +31,9 @@ import (
 	"github.com/kashmir-explorer/api/internal/cultural"
 	"github.com/kashmir-explorer/api/internal/destination"
 	"github.com/kashmir-explorer/api/internal/groups"
+	"github.com/kashmir-explorer/api/internal/homehero"
 	"github.com/kashmir-explorer/api/internal/image"
+	"github.com/kashmir-explorer/api/internal/mapconfig"
 	mw "github.com/kashmir-explorer/api/internal/middleware"
 	"github.com/kashmir-explorer/api/internal/permit"
 	"github.com/kashmir-explorer/api/internal/photo"
@@ -42,6 +44,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/social"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
+	"github.com/kashmir-explorer/api/internal/theme"
 	"github.com/kashmir-explorer/api/internal/trek"
 	"github.com/kashmir-explorer/api/internal/upload"
 	"github.com/kashmir-explorer/api/internal/user"
@@ -83,6 +86,9 @@ type Deps struct {
 	Crowd        *crowd.Service
 	Groups       *groups.Service
 	Image        *image.Service
+	HomeHero     *homehero.Service
+	Theme        *theme.Service
+	MapConfig    *mapconfig.Service
 	Report       *report.Service
 	Review       *review.Service
 	Social       *social.Service
@@ -228,7 +234,18 @@ func registerPublic(r chi.Router, d Deps) {
 	r.Route("/images", func(r chi.Router) {
 		r.Get("/destination/{id}", d.Image.ForDestination)
 		r.Get("/trek/{id}", d.Image.ForTrek)
+		r.Get("/photo-spot/{id}", d.Image.ForPhotoSpot)
+		r.Get("/{id}/raw", d.Image.Raw) // serve bytes stored in the DB
 	})
+
+	// Curated home-screen hero carousel (public read).
+	r.Get("/home-hero", d.HomeHero.List)
+
+	// App-wide color theme overrides (public read; mobile applies at launch).
+	r.Get("/theme", d.Theme.Get)
+
+	// App-wide map engine selection (public read; mobile picks the renderer).
+	r.Get("/map-config", d.MapConfig.Get)
 
 	r.Route("/ai", func(r chi.Router) {
 		// LLM calls are the most expensive endpoints we have — keep them tight.
@@ -259,6 +276,7 @@ func registerAuthed(r chi.Router, d Deps) {
 
 		r.Post("/sync", d.Sync.Apply)
 		r.Post("/upload/presign", d.Upload.Presign)
+		r.Post("/upload/image", d.Image.Upload) // store image bytes in the DB (interim)
 
 		// Trek nav extras (auth required for accountability).
 		r.Post("/treks/{slug}/ping", d.Crowd.Ping)
@@ -362,6 +380,21 @@ func registerAdmin(r chi.Router, d Deps) {
 		r.Post("/images", d.Image.AdminCreate)
 		r.Put("/images/{id}", d.Image.AdminUpdate)
 		r.Delete("/images/{id}", d.Image.AdminDelete)
+
+		// Home hero banners (curated carousel)
+		r.Get("/home-hero", d.HomeHero.AdminList)
+		r.Get("/home-hero/{id}", d.HomeHero.AdminGet)
+		r.Post("/home-hero", d.HomeHero.AdminCreate)
+		r.Put("/home-hero/{id}", d.HomeHero.AdminUpdate)
+		r.Delete("/home-hero/{id}", d.HomeHero.AdminDelete)
+
+		// App theme
+		r.Get("/theme", d.Theme.AdminGet)
+		r.Put("/theme", d.Theme.AdminUpdate)
+
+		// Map engine config
+		r.Get("/map-config", d.MapConfig.AdminGet)
+		r.Put("/map-config", d.MapConfig.AdminUpdate)
 
 		// Providers
 		r.Post("/providers", d.Provider.AdminCreate)

@@ -356,6 +356,8 @@ definitions:
         items:
           type: string
         type: array
+      has_entry_fee:
+        type: boolean
       id:
         type: string
       is_deleted:
@@ -390,6 +392,8 @@ definitions:
         type: number
       region_slug:
         type: string
+      requires_permit:
+        type: boolean
       review_count:
         type: integer
       season_type:
@@ -430,6 +434,8 @@ definitions:
         items:
           type: string
         type: array
+      has_entry_fee:
+        type: boolean
       is_featured:
         type: boolean
       is_published:
@@ -458,6 +464,8 @@ definitions:
         type: array
       region_slug:
         type: string
+      requires_permit:
+        type: boolean
       season_type:
         type: string
       slug:
@@ -515,6 +523,8 @@ definitions:
         items:
           type: string
         type: array
+      has_entry_fee:
+        type: boolean
       hero_image_url:
         type: string
       id:
@@ -535,6 +545,8 @@ definitions:
         type: array
       rating:
         type: number
+      requires_permit:
+        type: boolean
       review_count:
         type: integer
       season_type:
@@ -676,6 +688,51 @@ definitions:
       label:
         type: string
     type: object
+  internal_homehero.Banner:
+    properties:
+      blurhash:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      link_type:
+        description: none | destination | trek | screen
+        type: string
+      link_value:
+        type: string
+      sort_order:
+        type: integer
+      subtitle:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_homehero.BannerInput:
+    properties:
+      blurhash:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      link_type:
+        type: string
+      link_value:
+        type: string
+      sort_order:
+        type: integer
+      subtitle:
+        type: string
+      title:
+        type: string
+    type: object
   internal_image.Image:
     properties:
       blurhash:
@@ -690,6 +747,8 @@ definitions:
         type: string
       is_hero:
         type: boolean
+      photo_spot_id:
+        type: string
       sort_order:
         type: integer
       trek_id:
@@ -707,12 +766,41 @@ definitions:
         type: string
       is_hero:
         type: boolean
+      photo_spot_id:
+        type: string
       sort_order:
         type: integer
       trek_id:
         type: string
       url:
         type: string
+    type: object
+  internal_image.UploadResult:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
+    type: object
+  internal_mapconfig.Config:
+    properties:
+      engine:
+        description: 'Engine is the map renderer: "cesium" (free CesiumJS globe) or
+          "mapbox".'
+        type: string
+      terrain_exaggeration:
+        description: TerrainExaggeration scales terrain relief (0–3, both engines
+          honour it).
+        type: number
+      updated_at:
+        type: string
+    type: object
+  internal_mapconfig.ConfigInput:
+    properties:
+      engine:
+        type: string
+      terrain_exaggeration:
+        type: number
     type: object
   internal_permit.Permit:
     properties:
@@ -1109,6 +1197,24 @@ definitions:
         type: array
       ts:
         type: integer
+    type: object
+  internal_theme.Theme:
+    properties:
+      colors:
+        additionalProperties:
+          type: string
+        description: Colors maps design-token keys (e.g. "saffron", "dalBlue") to
+          hex strings.
+        type: object
+      updated_at:
+        type: string
+    type: object
+  internal_theme.ThemeInput:
+    properties:
+      colors:
+        additionalProperties:
+          type: string
+        type: object
     type: object
   internal_trek.AdminTrek:
     properties:
@@ -1947,6 +2053,120 @@ paths:
       summary: Restore a soft-deleted destination (admin)
       tags:
       - admin-destinations
+  /v1/admin/home-hero:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_homehero.Banner'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all home hero banners incl. inactive (admin)
+      tags:
+      - admin-home-hero
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_homehero.BannerInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a home hero banner (admin)
+      tags:
+      - admin-home-hero
+  /v1/admin/home-hero/{id}:
+    delete:
+      parameters:
+      - description: Banner ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Delete a home hero banner (admin)
+      tags:
+      - admin-home-hero
+    get:
+      parameters:
+      - description: Banner ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_homehero.Banner'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a home hero banner (admin)
+      tags:
+      - admin-home-hero
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Banner ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Banner
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_homehero.BannerInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a home hero banner (admin)
+      tags:
+      - admin-home-hero
   /v1/admin/images:
     post:
       consumes:
@@ -2017,6 +2237,56 @@ paths:
       summary: Update image metadata (caption/hero/order) (admin)
       tags:
       - admin-images
+  /v1/admin/map-config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_mapconfig.Config'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get the map configuration (admin)
+      tags:
+      - admin-map-config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Map config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_mapconfig.ConfigInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_mapconfig.Config'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update the map configuration (admin)
+      tags:
+      - admin-map-config
   /v1/admin/permits:
     post:
       consumes:
@@ -2614,6 +2884,56 @@ paths:
       summary: Update a road/pass status (admin)
       tags:
       - admin-roads
+  /v1/admin/theme:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_theme.Theme'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get the app theme (admin)
+      tags:
+      - admin-theme
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Theme
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_theme.ThemeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_theme.Theme'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Replace the app theme color overrides (admin)
+      tags:
+      - admin-theme
   /v1/admin/tracks:
     get:
       produces:
@@ -3718,6 +4038,47 @@ paths:
       summary: Join a trip group by invite code
       tags:
       - groups
+  /v1/home-hero:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_homehero.Banner'
+                  type: array
+              type: object
+      summary: List active home hero banners
+      tags:
+      - home-hero
+  /v1/images/{id}/raw:
+    get:
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/*
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      summary: Serve raw image bytes stored in the DB
+      tags:
+      - images
   /v1/images/destination/{id}:
     get:
       parameters:
@@ -3741,6 +4102,31 @@ paths:
                   type: array
               type: object
       summary: List images for a destination
+      tags:
+      - images
+  /v1/images/photo-spot/{id}:
+    get:
+      parameters:
+      - description: Photo Spot ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_image.Image'
+                  type: array
+              type: object
+      summary: List images for a photo spot
       tags:
       - images
   /v1/images/trek/{id}:
@@ -3835,6 +4221,23 @@ paths:
       summary: Update an itinerary (not yet implemented)
       tags:
       - user
+  /v1/map-config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_mapconfig.Config'
+              type: object
+      summary: Get the active map configuration (engine + terrain)
+      tags:
+      - map-config
   /v1/me:
     get:
       produces:
@@ -4345,6 +4748,23 @@ paths:
       summary: Apply queued offline operations (save/unsave)
       tags:
       - sync
+  /v1/theme:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_theme.Theme'
+              type: object
+      summary: Get the active app theme (color overrides)
+      tags:
+      - theme
   /v1/tracks:
     post:
       consumes:
@@ -4667,6 +5087,60 @@ paths:
       summary: Create/update my review for a trek
       tags:
       - reviews
+  /v1/upload/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Accepts a multipart form ("file") or a raw image body. The bytes
+        are stored in Postgres and served back via /v1/images/{id}/raw.
+      parameters:
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Destination ID
+        in: formData
+        name: destination_id
+        type: string
+      - description: Trek ID
+        in: formData
+        name: trek_id
+        type: string
+      - description: Caption
+        in: formData
+        name: caption
+        type: string
+      - description: Is hero image
+        in: formData
+        name: is_hero
+        type: boolean
+      - description: Sort order
+        in: formData
+        name: sort_order
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_image.UploadResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Upload an image, stored directly in the DB (interim)
+      tags:
+      - upload
   /v1/upload/presign:
     post:
       consumes:

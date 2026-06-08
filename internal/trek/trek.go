@@ -28,6 +28,7 @@ type Trek struct {
 	EndPoint       *string  `json:"end_point,omitempty"`
 	BestMonths     []int    `json:"best_months,omitempty"`
 	Permits        []string `json:"permits,omitempty"`
+	RequiresPermit bool     `json:"requires_permit"`
 	AmsRisk        bool     `json:"ams_risk"`
 	Status         *string  `json:"status,omitempty"`
 	ClosureReason  *string  `json:"closure_reason,omitempty"`
@@ -65,7 +66,7 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT t.id::text, t.slug, t.name, t.difficulty, t.trek_type, t.duration_days, t.distance_km,
-		       t.max_altitude_m, t.start_point, t.end_point, t.best_months, t.permits,
+		       t.max_altitude_m, t.start_point, t.end_point, t.best_months, t.permits, t.requires_permit,
 		       t.ams_risk, t.status, t.closure_reason, t.tagline, t.uniqueness, t.rating, t.review_count,
 		       t.guide_available, t.guide_price_inr,
 		       COALESCE(t.features, '{}'::TEXT[]),
@@ -91,7 +92,7 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 		var t Trek
 		if err := rows.Scan(
 			&t.ID, &t.Slug, &t.Name, &t.Difficulty, &t.TrekType, &t.DurationDays, &t.DistanceKm,
-			&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits,
+			&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits, &t.RequiresPermit,
 			&t.AmsRisk, &t.Status, &t.ClosureReason, &t.Tagline, &t.Uniqueness, &t.Rating, &t.ReviewCount,
 			&t.GuideAvailable, &t.GuidePriceINR,
 			&t.Features, &t.Activities, &t.ElevationGainM, &t.RouteType, &t.HeroImageURL,
@@ -118,7 +119,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 	var waypoints, gearList, sections any
 	err := s.pool.QueryRow(r.Context(), `
 		SELECT t.id::text, t.slug, t.name, t.difficulty, t.trek_type, t.duration_days, t.distance_km,
-		       t.max_altitude_m, t.start_point, t.end_point, t.best_months, t.permits,
+		       t.max_altitude_m, t.start_point, t.end_point, t.best_months, t.permits, t.requires_permit,
 		       t.ams_risk, t.status, t.closure_reason, t.tagline, t.uniqueness, t.rating, t.review_count,
 		       t.guide_available, t.guide_price_inr, t.waypoints, t.gear_list, t.trail_sections,
 		       COALESCE(t.features, '{}'::TEXT[]),
@@ -130,7 +131,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		FROM treks t WHERE t.slug = $1 AND t.is_published = true
 	`, slug).Scan(
 		&t.ID, &t.Slug, &t.Name, &t.Difficulty, &t.TrekType, &t.DurationDays, &t.DistanceKm,
-		&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits,
+		&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits, &t.RequiresPermit,
 		&t.AmsRisk, &t.Status, &t.ClosureReason, &t.Tagline, &t.Uniqueness, &t.Rating, &t.ReviewCount,
 		&t.GuideAvailable, &t.GuidePriceINR, &waypoints, &gearList, &sections,
 		&t.Features, &t.Activities, &t.ElevationGainM, &t.RouteType, &t.HeroImageURL,
@@ -154,6 +155,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		"end_point":        t.EndPoint,
 		"best_months":      t.BestMonths,
 		"permits":          t.Permits,
+		"requires_permit":  t.RequiresPermit,
 		"ams_risk":         t.AmsRisk,
 		"status":           t.Status,
 		"closure_reason":   t.ClosureReason,
@@ -228,6 +230,7 @@ type AdminTrek struct {
 	EndPoint       *string         `json:"end_point"`
 	BestMonths     []int           `json:"best_months"`
 	Permits        []string        `json:"permits"`
+	RequiresPermit bool            `json:"requires_permit"`
 	AmsRisk        bool            `json:"ams_risk"`
 	Status         string          `json:"status"`
 	ClosureReason  *string         `json:"closure_reason"`
@@ -280,9 +283,10 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 			 ams_risk, status, closure_reason, tagline, uniqueness,
 			 guide_available, guide_price_inr, waypoints, gear_list,
 			 path_geojson, waypoint_coords, trail_sections, is_published,
-			 features, activities, elevation_gain_m, route_type, path_phases)
+			 features, activities, elevation_gain_m, route_type, path_phases,
+			 requires_permit)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,
-		        $25,$26,$27,$28,$29)
+		        $25,$26,$27,$28,$29,$30)
 		RETURNING id::text
 	`, in.Slug, in.Name, in.Difficulty, in.TrekType, in.DurationDays, in.DistanceKm,
 		in.MaxAltitudeM, in.StartPoint, in.EndPoint, in.BestMonths, in.Permits,
@@ -290,6 +294,7 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 		in.GuideAvailable, in.GuidePriceINR, in.Waypoints, in.GearList,
 		in.PathGeoJSON, in.WaypointCoords, in.TrailSections, in.IsPublished,
 		in.Features, in.Activities, in.ElevationGainM, in.RouteType, in.PathPhases,
+		in.RequiresPermit,
 	).Scan(&id)
 	if err != nil {
 		response.Internal(w, err)
@@ -326,7 +331,7 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 			waypoints=$20, gear_list=$21, path_geojson=$22, waypoint_coords=$23,
 			trail_sections=$24, is_published=$25,
 			features=$26, activities=$27, elevation_gain_m=$28, route_type=$29,
-			path_phases=$30,
+			path_phases=$30, requires_permit=$31,
 			updated_at=now()
 		WHERE id=$1
 	`, id, in.Slug, in.Name, in.Difficulty, in.TrekType, in.DurationDays,
@@ -335,6 +340,7 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 		in.Tagline, in.Uniqueness, in.GuideAvailable, in.GuidePriceINR,
 		in.Waypoints, in.GearList, in.PathGeoJSON, in.WaypointCoords, in.TrailSections, in.IsPublished,
 		in.Features, in.Activities, in.ElevationGainM, in.RouteType, in.PathPhases,
+		in.RequiresPermit,
 	)
 	if err != nil {
 		response.Internal(w, err)
@@ -356,7 +362,7 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 	var t AdminTrek
 	err := s.pool.QueryRow(r.Context(), `
 		SELECT id::text, slug, name, difficulty, trek_type, duration_days, distance_km,
-		       max_altitude_m, start_point, end_point, best_months, permits,
+		       max_altitude_m, start_point, end_point, best_months, permits, requires_permit,
 		       ams_risk, status, closure_reason, tagline, uniqueness,
 		       rating, review_count, guide_available, guide_price_inr,
 		       COALESCE(waypoints, '[]'::jsonb), COALESCE(gear_list, '[]'::jsonb),
@@ -369,7 +375,7 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 		FROM treks WHERE id = $1
 	`, id).Scan(
 		&t.ID, &t.Slug, &t.Name, &t.Difficulty, &t.TrekType, &t.DurationDays, &t.DistanceKm,
-		&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits,
+		&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits, &t.RequiresPermit,
 		&t.AmsRisk, &t.Status, &t.ClosureReason, &t.Tagline, &t.Uniqueness,
 		&t.Rating, &t.ReviewCount, &t.GuideAvailable, &t.GuidePriceINR,
 		&t.Waypoints, &t.GearList, &t.PathGeoJSON, &t.WaypointCoords, &t.TrailSections, &t.IsPublished,
@@ -392,7 +398,7 @@ func (s *Service) AdminGet(w http.ResponseWriter, r *http.Request) {
 func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), `
 		SELECT id::text, slug, name, difficulty, trek_type, duration_days, distance_km,
-		       max_altitude_m, start_point, end_point, best_months, permits,
+		       max_altitude_m, start_point, end_point, best_months, permits, requires_permit,
 		       ams_risk, status, closure_reason, tagline, uniqueness,
 		       rating, review_count, guide_available, guide_price_inr, is_published
 		FROM treks ORDER BY name
@@ -408,7 +414,7 @@ func (s *Service) AdminList(w http.ResponseWriter, r *http.Request) {
 		var t AdminTrek
 		if err := rows.Scan(
 			&t.ID, &t.Slug, &t.Name, &t.Difficulty, &t.TrekType, &t.DurationDays, &t.DistanceKm,
-			&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits,
+			&t.MaxAltitudeM, &t.StartPoint, &t.EndPoint, &t.BestMonths, &t.Permits, &t.RequiresPermit,
 			&t.AmsRisk, &t.Status, &t.ClosureReason, &t.Tagline, &t.Uniqueness,
 			&t.Rating, &t.ReviewCount, &t.GuideAvailable, &t.GuidePriceINR, &t.IsPublished,
 		); err != nil {

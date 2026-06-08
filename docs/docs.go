@@ -841,6 +841,200 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/admin/home-hero": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-home-hero"
+                ],
+                "summary": "List all home hero banners incl. inactive (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_homehero.Banner"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-home-hero"
+                ],
+                "summary": "Create a home hero banner (admin)",
+                "parameters": [
+                    {
+                        "description": "Banner",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_homehero.BannerInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/home-hero/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-home-hero"
+                ],
+                "summary": "Get a home hero banner (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Banner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_homehero.Banner"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-home-hero"
+                ],
+                "summary": "Update a home hero banner (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Banner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Banner",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_homehero.BannerInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-home-hero"
+                ],
+                "summary": "Delete a home hero banner (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Banner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/v1/admin/images": {
             "post": {
                 "security": [
@@ -951,6 +1145,96 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/v1/admin/map-config": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-map-config"
+                ],
+                "summary": "Get the map configuration (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_mapconfig.Config"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-map-config"
+                ],
+                "summary": "Update the map configuration (admin)",
+                "parameters": [
+                    {
+                        "description": "Map config",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_mapconfig.ConfigInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_mapconfig.Config"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
                     }
                 }
             }
@@ -1945,6 +2229,96 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/theme": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-theme"
+                ],
+                "summary": "Get the app theme (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_theme.Theme"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-theme"
+                ],
+                "summary": "Replace the app theme color overrides (admin)",
+                "parameters": [
+                    {
+                        "description": "Theme",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_theme.ThemeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_theme.Theme"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
@@ -3832,6 +4206,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/home-hero": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "home-hero"
+                ],
+                "summary": "List active home hero banners",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_homehero.Banner"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/images/destination/{id}": {
             "get": {
                 "produces": [
@@ -3845,6 +4253,49 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Destination ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_image.Image"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/images/photo-spot/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "summary": "List images for a photo spot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Photo Spot ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3913,6 +4364,40 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/images/{id}/raw": {
+            "get": {
+                "produces": [
+                    "image/*"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "summary": "Serve raw image bytes stored in the DB",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
                     }
                 }
@@ -4029,6 +4514,37 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/map-config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "map-config"
+                ],
+                "summary": "Get the active map configuration (engine + terrain)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_mapconfig.Config"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -4918,6 +5434,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/theme": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "theme"
+                ],
+                "summary": "Get the active app theme (color overrides)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_theme.Theme"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tracks": {
             "post": {
                 "security": [
@@ -5444,6 +5991,91 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/upload/image": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Accepts a multipart form (\"file\") or a raw image body. The bytes\nare stored in Postgres and served back via /v1/images/{id}/raw.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Upload an image, stored directly in the DB (interim)",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Destination ID",
+                        "name": "destination_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trek ID",
+                        "name": "trek_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Caption",
+                        "name": "caption",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Is hero image",
+                        "name": "is_hero",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_image.UploadResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
                         }
@@ -6315,6 +6947,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "has_entry_fee": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -6365,6 +7000,9 @@ const docTemplate = `{
                 },
                 "region_slug": {
                     "type": "string"
+                },
+                "requires_permit": {
+                    "type": "boolean"
                 },
                 "review_count": {
                     "type": "integer"
@@ -6426,6 +7064,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "has_entry_fee": {
+                    "type": "boolean"
+                },
                 "is_featured": {
                     "type": "boolean"
                 },
@@ -6467,6 +7108,9 @@ const docTemplate = `{
                 },
                 "region_slug": {
                     "type": "string"
+                },
+                "requires_permit": {
+                    "type": "boolean"
                 },
                 "season_type": {
                     "type": "string"
@@ -6555,6 +7199,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "has_entry_fee": {
+                    "type": "boolean"
+                },
                 "hero_image_url": {
                     "type": "string"
                 },
@@ -6584,6 +7231,9 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "number"
+                },
+                "requires_permit": {
+                    "type": "boolean"
                 },
                 "review_count": {
                     "type": "integer"
@@ -6802,6 +7452,74 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_homehero.Banner": {
+            "type": "object",
+            "properties": {
+                "blurhash": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "link_type": {
+                    "description": "none | destination | trek | screen",
+                    "type": "string"
+                },
+                "link_value": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_homehero.BannerInput": {
+            "type": "object",
+            "properties": {
+                "blurhash": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "link_type": {
+                    "type": "string"
+                },
+                "link_value": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_image.Image": {
             "type": "object",
             "properties": {
@@ -6822,6 +7540,9 @@ const docTemplate = `{
                 },
                 "is_hero": {
                     "type": "boolean"
+                },
+                "photo_spot_id": {
+                    "type": "string"
                 },
                 "sort_order": {
                     "type": "integer"
@@ -6849,6 +7570,9 @@ const docTemplate = `{
                 "is_hero": {
                     "type": "boolean"
                 },
+                "photo_spot_id": {
+                    "type": "string"
+                },
                 "sort_order": {
                     "type": "integer"
                 },
@@ -6857,6 +7581,44 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_image.UploadResult": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_mapconfig.Config": {
+            "type": "object",
+            "properties": {
+                "engine": {
+                    "description": "Engine is the map renderer: \"cesium\" (free CesiumJS globe) or \"mapbox\".",
+                    "type": "string"
+                },
+                "terrain_exaggeration": {
+                    "description": "TerrainExaggeration scales terrain relief (0–3, both engines honour it).",
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_mapconfig.ConfigInput": {
+            "type": "object",
+            "properties": {
+                "engine": {
+                    "type": "string"
+                },
+                "terrain_exaggeration": {
+                    "type": "number"
                 }
             }
         },
@@ -7456,6 +8218,32 @@ const docTemplate = `{
                 },
                 "ts": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_theme.Theme": {
+            "type": "object",
+            "properties": {
+                "colors": {
+                    "description": "Colors maps design-token keys (e.g. \"saffron\", \"dalBlue\") to hex strings.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_theme.ThemeInput": {
+            "type": "object",
+            "properties": {
+                "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },

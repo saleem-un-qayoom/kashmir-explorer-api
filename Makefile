@@ -22,8 +22,13 @@ run:
 	go run ./cmd/server
 
 dev:
-	@echo "  Live-reload via air. Install: go install github.com/air-verse/air@latest"
-	air -c .air.toml || go run ./cmd/server
+	@if command -v air >/dev/null 2>&1; then \
+	  echo "  live-reload via air"; \
+	  air -c .air.toml; \
+	else \
+	  echo "  air not installed — falling back to go run (install with: go install github.com/air-verse/air@latest)"; \
+	  go run ./cmd/server; \
+	fi
 
 tidy:
 	go mod tidy

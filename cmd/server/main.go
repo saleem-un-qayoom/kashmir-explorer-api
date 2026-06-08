@@ -41,8 +41,10 @@ import (
 	"github.com/kashmir-explorer/api/internal/cultural"
 	"github.com/kashmir-explorer/api/internal/destination"
 	"github.com/kashmir-explorer/api/internal/groups"
+	"github.com/kashmir-explorer/api/internal/homehero"
 	"github.com/kashmir-explorer/api/internal/image"
 	"github.com/kashmir-explorer/api/internal/jobs"
+	"github.com/kashmir-explorer/api/internal/mapconfig"
 	"github.com/kashmir-explorer/api/internal/permit"
 	"github.com/kashmir-explorer/api/internal/photo"
 	"github.com/kashmir-explorer/api/internal/provider"
@@ -53,6 +55,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/social"
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
+	"github.com/kashmir-explorer/api/internal/theme"
 	"github.com/kashmir-explorer/api/internal/trek"
 	"github.com/kashmir-explorer/api/internal/upload"
 	"github.com/kashmir-explorer/api/internal/user"
@@ -127,7 +130,7 @@ func main() {
 	// Uses a background context so it outlives the 10s DB-connect timeout.
 	fetcherCtx, cancelFetcher := context.WithCancel(context.Background())
 	defer cancelFetcher()
-	go advisory.NewFetcher(pool, hub).Start(fetcherCtx)
+	go advisory.NewFetcher(pool, hub, cfg.NDMAURL, cfg.IMDURL).Start(fetcherCtx)
 
 	// ── Domain handlers, assembled into router.Deps.
 	deps := router.Deps{
@@ -151,12 +154,15 @@ func main() {
 		Cultural:     cultural.NewService(pool),
 		Photo:        photo.NewService(pool),
 		Permit:       permit.NewService(pool),
-		Upload:       upload.NewService(cfg.R2),
+		Upload:       upload.NewService(cfg.Supabase),
 		Sync:         syncpkg.NewService(pool),
 		Search:       search.NewService(pool, cfg.VoyageKey),
 		Crowd:        crowd.NewService(pool, rooms),
 		Groups:       groups.NewService(pool),
 		Image:        image.NewService(pool),
+		HomeHero:     homehero.NewService(pool),
+		Theme:        theme.NewService(pool),
+		MapConfig:    mapconfig.NewService(pool),
 		Report:       report.NewService(pool),
 		Review:       review.NewService(pool),
 		Social:       social.NewService(pool),

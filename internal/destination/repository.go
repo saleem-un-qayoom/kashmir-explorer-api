@@ -26,7 +26,8 @@ func (r *Repository) List(ctx context.Context, region, category string, limit, o
 		       d.tagline, d.uniqueness,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
-		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr, d.permits,
+		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr, d.has_entry_fee,
+		       d.permits, d.requires_permit,
 		       COALESCE(array_agg(c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(d.features, '{}'::TEXT[]),
 		       (SELECT url FROM images i
@@ -59,7 +60,8 @@ func (r *Repository) List(ctx context.Context, region, category string, limit, o
 			&d.ID, &d.Slug, &d.Name, &d.NameUrdu, &d.NameHindi, &d.District,
 			&d.Tagline, &d.Uniqueness, &d.Lng, &d.Lat,
 			&d.AltitudeM, &d.BestMonths, &d.SeasonType,
-			&d.Rating, &d.ReviewCount, &d.DistanceFromSrinagar, &d.EntryFeeINR, &d.Permits,
+			&d.Rating, &d.ReviewCount, &d.DistanceFromSrinagar, &d.EntryFeeINR, &d.HasEntryFee,
+			&d.Permits, &d.RequiresPermit,
 			&d.Categories, &d.Features, &d.HeroImageURL,
 		); err != nil {
 			return nil, err
@@ -189,7 +191,8 @@ func (r *Repository) GetBySlug(ctx context.Context, slug string) (*Destination, 
 		       d.tagline, d.uniqueness, d.description,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type, d.rating, d.review_count,
-		       d.distance_from_srinagar_km, d.entry_fee_inr, d.permits,
+		       d.distance_from_srinagar_km, d.entry_fee_inr, d.has_entry_fee,
+		       d.permits, d.requires_permit,
 		       COALESCE(d.features, '{}'::TEXT[]),
 		       (SELECT url FROM images i
 		         WHERE i.destination_id = d.id
@@ -200,7 +203,8 @@ func (r *Repository) GetBySlug(ctx context.Context, slug string) (*Destination, 
 		&d.Tagline, &d.Uniqueness, &d.Description,
 		&d.Lng, &d.Lat,
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType, &d.Rating, &d.ReviewCount,
-		&d.DistanceFromSrinagar, &d.EntryFeeINR, &d.Permits,
+		&d.DistanceFromSrinagar, &d.EntryFeeINR, &d.HasEntryFee,
+		&d.Permits, &d.RequiresPermit,
 		&d.Features, &d.HeroImageURL,
 	)
 	if err != nil {
@@ -265,8 +269,8 @@ func (r *Repository) AdminList(ctx context.Context, status string) ([]AdminDest,
 		       r.slug, d.tagline, d.uniqueness, d.description,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
-		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
-		       d.permits, d.is_published, d.is_featured, d.is_deleted,
+		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr, d.has_entry_fee,
+		       d.permits, d.requires_permit, d.is_published, d.is_featured, d.is_deleted,
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
@@ -295,8 +299,8 @@ func (r *Repository) AdminList(ctx context.Context, status string) ([]AdminDest,
 			&d.RegionSlug, &d.Tagline, &d.Uniqueness, &d.Description,
 			&d.Lng, &d.Lat,
 			&d.AltitudeM, &d.BestMonths, &d.SeasonType,
-			&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
-			&d.Permits, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
+			&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee, &d.HasEntryFee,
+			&d.Permits, &d.RequiresPermit, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 			&d.NetworkCoverage, &d.Practical,
 			&d.Categories, &d.Activities, &d.Features,
 		); err != nil {
@@ -314,8 +318,8 @@ func (r *Repository) AdminGet(ctx context.Context, id string) (*AdminDest, error
 		       r.slug, d.tagline, d.uniqueness, d.description,
 		       ST_X(d.location::geometry), ST_Y(d.location::geometry),
 		       d.altitude_m, d.best_months, d.season_type,
-		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr,
-		       d.permits, d.is_published, d.is_featured, d.is_deleted,
+		       d.rating, d.review_count, d.distance_from_srinagar_km, d.entry_fee_inr, d.has_entry_fee,
+		       d.permits, d.requires_permit, d.is_published, d.is_featured, d.is_deleted,
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
@@ -332,8 +336,8 @@ func (r *Repository) AdminGet(ctx context.Context, id string) (*AdminDest, error
 		&d.RegionSlug, &d.Tagline, &d.Uniqueness, &d.Description,
 		&d.Lng, &d.Lat,
 		&d.AltitudeM, &d.BestMonths, &d.SeasonType,
-		&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee,
-		&d.Permits, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
+		&d.Rating, &d.ReviewCount, &d.DistFromSgr, &d.EntryFee, &d.HasEntryFee,
+		&d.Permits, &d.RequiresPermit, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 		&d.NetworkCoverage, &d.Practical,
 		&d.Categories, &d.Activities, &d.Features,
 	)
@@ -354,14 +358,15 @@ func (r *Repository) AdminCreate(ctx context.Context, in AdminDestInput) (string
 			 description, location, altitude_m, best_months, season_type,
 			 distance_from_srinagar_km, entry_fee_inr, permits,
 			 network_coverage, practical,
-			 is_published, is_featured, features)
+			 is_published, is_featured, features,
+			 requires_permit, has_entry_fee)
 		VALUES ($1, $2, $3, $4,
 			(SELECT id FROM regions WHERE slug = $5),
 			$6, $7, $8, $9,
 			CASE WHEN $10::float8 IS NOT NULL AND $11::float8 IS NOT NULL
 			     THEN ST_SetSRID(ST_MakePoint($10, $11), 4326)::geography
 			     ELSE NULL END,
-			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
 		RETURNING id::text
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
@@ -369,6 +374,7 @@ func (r *Repository) AdminCreate(ctx context.Context, in AdminDestInput) (string
 		in.DistFromSgr, in.EntryFee, in.Permits,
 		in.NetworkCoverage, in.Practical,
 		in.IsPublished, in.IsFeatured, in.Features,
+		in.RequiresPermit, in.HasEntryFee,
 	).Scan(&id)
 	if err != nil {
 		return "", err
@@ -406,14 +412,16 @@ func (r *Repository) AdminUpdate(ctx context.Context, id string, in AdminDestInp
 			network_coverage = $18, practical = $19,
 			is_published = $20, is_featured = $21,
 			features = $22,
+			requires_permit = $23, has_entry_fee = $24,
 			updated_at = now()
-		WHERE id = $23
+		WHERE id = $25
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
 		in.Lng, in.Lat, in.AltitudeM, in.BestMonths, in.SeasonType,
 		in.DistFromSgr, in.EntryFee, in.Permits,
 		in.NetworkCoverage, in.Practical,
 		in.IsPublished, in.IsFeatured, in.Features,
+		in.RequiresPermit, in.HasEntryFee,
 		id,
 	)
 	if err != nil {

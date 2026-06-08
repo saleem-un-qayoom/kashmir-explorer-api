@@ -6,6 +6,7 @@ DELETE	/v1/admin/cultural/festivals/{id}
 DELETE	/v1/admin/cultural/food/{id}
 DELETE	/v1/admin/destinations/{id}
 DELETE	/v1/admin/destinations/{id}/permanent
+DELETE	/v1/admin/home-hero/{id}
 DELETE	/v1/admin/images/{id}
 DELETE	/v1/admin/permits/{id}
 DELETE	/v1/admin/photo-spots/{id}
@@ -25,6 +26,9 @@ GET	/swagger/*
 GET	/v1/admin/categories/{id}
 GET	/v1/admin/destinations
 GET	/v1/admin/destinations/{id}
+GET	/v1/admin/home-hero
+GET	/v1/admin/home-hero/{id}
+GET	/v1/admin/map-config
 GET	/v1/admin/permits/{id}
 GET	/v1/admin/photo-spots
 GET	/v1/admin/photo-spots/{id}
@@ -33,6 +37,7 @@ GET	/v1/admin/reports
 GET	/v1/admin/reviews
 GET	/v1/admin/roads/status
 GET	/v1/admin/roads/status/{id}
+GET	/v1/admin/theme
 GET	/v1/admin/tracks
 GET	/v1/admin/treks
 GET	/v1/admin/treks/{id}
@@ -60,9 +65,13 @@ GET	/v1/destinations/{slug}
 GET	/v1/destinations/{slug}/photo-spots
 GET	/v1/destinations/{slug}/reviews
 GET	/v1/groups/{code}
+GET	/v1/home-hero
 GET	/v1/images/destination/{id}
+GET	/v1/images/photo-spot/{id}
 GET	/v1/images/trek/{id}
+GET	/v1/images/{id}/raw
 GET	/v1/itineraries/
+GET	/v1/map-config
 GET	/v1/me
 GET	/v1/me/completions
 GET	/v1/me/feed
@@ -80,6 +89,7 @@ GET	/v1/roads/status
 GET	/v1/roads/status/{id}
 GET	/v1/saved/
 GET	/v1/search
+GET	/v1/theme
 GET	/v1/tracks/share/{token}
 GET	/v1/treks/
 GET	/v1/treks/{slug}
@@ -103,6 +113,7 @@ POST	/v1/admin/cultural/festivals
 POST	/v1/admin/cultural/food
 POST	/v1/admin/destinations
 POST	/v1/admin/destinations/{id}/restore
+POST	/v1/admin/home-hero
 POST	/v1/admin/images
 POST	/v1/admin/permits
 POST	/v1/admin/photo-spots
@@ -136,6 +147,7 @@ POST	/v1/treks/{slug}/bag
 POST	/v1/treks/{slug}/ping
 POST	/v1/treks/{slug}/report
 POST	/v1/treks/{slug}/reviews
+POST	/v1/upload/image
 POST	/v1/upload/presign
 POST	/v1/users/{id}/follow
 POST	/v1/webhooks/razorpay
@@ -146,12 +158,15 @@ PUT	/v1/admin/cultural/etiquette/{id}
 PUT	/v1/admin/cultural/festivals/{id}
 PUT	/v1/admin/cultural/food/{id}
 PUT	/v1/admin/destinations/{id}
+PUT	/v1/admin/home-hero/{id}
 PUT	/v1/admin/images/{id}
+PUT	/v1/admin/map-config
 PUT	/v1/admin/permits/{id}
 PUT	/v1/admin/photo-spots/{id}
 PUT	/v1/admin/providers/{id}
 PUT	/v1/admin/regions/{id}
 PUT	/v1/admin/roads/status/{id}
 PUT	/v1/admin/roads/{id}/status
+PUT	/v1/admin/theme
 PUT	/v1/admin/treks/{id}
 PUT	/v1/itineraries/{id}

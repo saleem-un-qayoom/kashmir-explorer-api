@@ -30,7 +30,9 @@ type Destination struct {
 	ReviewCount          int      `json:"review_count"`
 	DistanceFromSrinagar *int     `json:"distance_from_srinagar_km,omitempty"`
 	EntryFeeINR          int      `json:"entry_fee_inr"`
+	HasEntryFee          bool     `json:"has_entry_fee"`
 	Permits              []string `json:"permits,omitempty"`
+	RequiresPermit       bool     `json:"requires_permit"`
 	Categories           []string `json:"categories,omitempty"`
 	Features             []string `json:"features,omitempty"`
 	Description          *string  `json:"description,omitempty"`
@@ -123,7 +125,9 @@ type AdminDest struct {
 	ReviewCount     int             `json:"review_count"`
 	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
 	EntryFee        int             `json:"entry_fee_inr"`
+	HasEntryFee     bool            `json:"has_entry_fee"`
 	Permits         []string        `json:"permits"`
+	RequiresPermit  bool            `json:"requires_permit"`
 	Activities      []string        `json:"activities"`
 	NetworkCoverage json.RawMessage `json:"network_coverage"`
 	Practical       json.RawMessage `json:"practical"`
@@ -151,7 +155,9 @@ type AdminDestInput struct {
 	SeasonType      *string         `json:"season_type"`
 	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
 	EntryFee        int             `json:"entry_fee_inr"`
+	HasEntryFee     bool            `json:"has_entry_fee"`
 	Permits         []string        `json:"permits"`
+	RequiresPermit  bool            `json:"requires_permit"`
 	Activities      []string        `json:"activities"`
 	NetworkCoverage json.RawMessage `json:"network_coverage"`
 	Practical       json.RawMessage `json:"practical"`
