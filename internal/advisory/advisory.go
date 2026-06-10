@@ -148,7 +148,8 @@ type AdminAdvisoryInput struct {
 	Source     *string `json:"source"`
 	Affected   *string `json:"affected"`
 	Confidence *int    `json:"confidence"`
-	ValidHours int     `json:"valid_hours"`
+	ValidHours int     `json:"valid_hours"`            // expiry as a relative window
+	ValidUntil *string `json:"valid_until,omitempty"` // OR an absolute date/timestamp (takes precedence)
 }
 
 // AdminCreate godoc
@@ -174,16 +175,22 @@ func (s *Service) AdminCreate(w http.ResponseWriter, r *http.Request) {
 	if body.Confidence != nil {
 		conf = *body.Confidence
 	}
+	validUntil := ""
+	if body.ValidUntil != nil {
+		validUntil = *body.ValidUntil
+	}
 
 	var a Advisory
 	err := s.pool.QueryRow(r.Context(), `
 		INSERT INTO advisories (severity, category, title, body, source, affected,
 		                        confidence, effective_from, effective_to)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now() + ($8 || ' hours')::interval)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, now(),
+		        CASE WHEN $9::text <> '' THEN $9::timestamptz
+		             ELSE now() + ($8 || ' hours')::interval END)
 		RETURNING id::text, severity, category, title, body, source, affected,
 		          confidence, effective_to, created_at
 	`, body.Severity, body.Category, body.Title, body.Body, body.Source, body.Affected,
-		conf, body.ValidHours,
+		conf, body.ValidHours, validUntil,
 	).Scan(&a.ID, &a.Severity, &a.Category, &a.Title, &a.Body, &a.Source, &a.Affected, &a.Confidence, &a.ValidUntil, &a.CreatedAt)
 	if err != nil {
 		response.Internal(w, err)
@@ -216,11 +223,21 @@ func (s *Service) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 		response.BadRequest(w, "invalid body")
 		return
 	}
+	validUntil := ""
+	if body.ValidUntil != nil {
+		validUntil = *body.ValidUntil
+	}
 	if _, err := s.pool.Exec(r.Context(), `
 		UPDATE advisories SET severity=$2, category=$3, title=$4, body=$5,
-		                      source=$6, affected=$7
+		                      source=$6, affected=$7,
+		                      confidence = COALESCE($8, confidence),
+		                      effective_to = CASE
+		                        WHEN $9::text <> '' THEN $9::timestamptz
+		                        WHEN $10::int > 0  THEN now() + ($10 || ' hours')::interval
+		                        ELSE effective_to END
 		WHERE id=$1
-	`, id, body.Severity, body.Category, body.Title, body.Body, body.Source, body.Affected); err != nil {
+	`, id, body.Severity, body.Category, body.Title, body.Body, body.Source, body.Affected,
+		body.Confidence, validUntil, body.ValidHours); err != nil {
 		response.Internal(w, err)
 		return
 	}

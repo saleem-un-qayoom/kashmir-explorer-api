@@ -3193,6 +3193,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/bookings/{id}/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Verifies the client-side payment signature and marks the booking confirmed. Idempotent with the webhook.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Confirm a booking from the Razorpay checkout success callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Razorpay handshake",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_booking.VerifyPaymentInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/bookings/{id}/wallet": {
             "get": {
                 "security": [
@@ -4527,7 +4591,7 @@ const docTemplate = `{
                 "tags": [
                     "map-config"
                 ],
-                "summary": "Get the active map configuration (engine + terrain)",
+                "summary": "Get the active map configuration",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6099,7 +6163,7 @@ const docTemplate = `{
                 "tags": [
                     "upload"
                 ],
-                "summary": "Get a presigned R2 upload URL",
+                "summary": "Get a presigned upload URL",
                 "parameters": [
                     {
                         "description": "File",
@@ -6440,7 +6504,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "valid_hours": {
+                    "description": "expiry as a relative window",
                     "type": "integer"
+                },
+                "valid_until": {
+                    "description": "OR an absolute date/timestamp (takes precedence)",
+                    "type": "string"
                 }
             }
         },
@@ -6740,6 +6809,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_booking.VerifyPaymentInput": {
+            "type": "object",
+            "properties": {
+                "razorpay_order_id": {
+                    "type": "string"
+                },
+                "razorpay_payment_id": {
+                    "type": "string"
+                },
+                "razorpay_signature": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_crowd.Density": {
             "type": "object",
             "properties": {
@@ -6913,6 +6996,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "address": {
+                    "type": "string"
+                },
                 "altitude_m": {
                     "type": "integer"
                 },
@@ -6928,6 +7014,13 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "closure_dates": {
+                    "description": "ISO dates (YYYY-MM-DD)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "description": {
                     "type": "string"
                 },
@@ -6936,6 +7029,16 @@ const docTemplate = `{
                 },
                 "district": {
                     "type": "string"
+                },
+                "emergency_contacts": {
+                    "description": "[{label,phone}]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "entry_fee_foreign_inr": {
+                    "type": "integer"
                 },
                 "entry_fee_inr": {
                     "type": "integer"
@@ -6983,6 +7086,13 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
+                "open_hours": {
+                    "description": "[{label,hours}]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "permits": {
                     "type": "array",
                     "items": {
@@ -7016,6 +7126,9 @@ const docTemplate = `{
                 "tagline": {
                     "type": "string"
                 },
+                "tehsil": {
+                    "type": "string"
+                },
                 "uniqueness": {
                     "type": "string"
                 }
@@ -7029,6 +7142,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "address": {
+                    "type": "string"
                 },
                 "altitude_m": {
                     "type": "integer"
@@ -7045,6 +7161,13 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "closure_dates": {
+                    "description": "ISO dates (YYYY-MM-DD)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "description": {
                     "type": "string"
                 },
@@ -7053,6 +7176,16 @@ const docTemplate = `{
                 },
                 "district": {
                     "type": "string"
+                },
+                "emergency_contacts": {
+                    "description": "[{label,phone}]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "entry_fee_foreign_inr": {
+                    "type": "integer"
                 },
                 "entry_fee_inr": {
                     "type": "integer"
@@ -7094,6 +7227,13 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
+                "open_hours": {
+                    "description": "[{label,hours}]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "permits": {
                     "type": "array",
                     "items": {
@@ -7119,6 +7259,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tagline": {
+                    "type": "string"
+                },
+                "tehsil": {
                     "type": "string"
                 },
                 "uniqueness": {
@@ -7598,12 +7741,8 @@ const docTemplate = `{
         "internal_mapconfig.Config": {
             "type": "object",
             "properties": {
-                "engine": {
-                    "description": "Engine is the map renderer: \"cesium\" (free CesiumJS globe) or \"mapbox\".",
-                    "type": "string"
-                },
                 "terrain_exaggeration": {
-                    "description": "TerrainExaggeration scales terrain relief (0–3, both engines honour it).",
+                    "description": "TerrainExaggeration scales terrain relief (0–3).",
                     "type": "number"
                 },
                 "updated_at": {
@@ -7614,9 +7753,6 @@ const docTemplate = `{
         "internal_mapconfig.ConfigInput": {
             "type": "object",
             "properties": {
-                "engine": {
-                    "type": "string"
-                },
                 "terrain_exaggeration": {
                     "type": "number"
                 }
@@ -8336,6 +8472,9 @@ const docTemplate = `{
                 "rating": {
                     "type": "number"
                 },
+                "requires_permit": {
+                    "type": "boolean"
+                },
                 "review_count": {
                     "type": "integer"
                 },
@@ -8578,6 +8717,9 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "number"
+                },
+                "requires_permit": {
+                    "type": "boolean"
                 },
                 "review_count": {
                     "type": "integer"

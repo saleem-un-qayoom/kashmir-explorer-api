@@ -37,7 +37,7 @@ func (r *Repository) List(ctx context.Context, region, category string, limit, o
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
 		LEFT JOIN categories c ON c.id = dc.category_id
-		WHERE d.is_published = true
+		WHERE d.is_published = true AND d.is_deleted = false
 		  AND ($1 = '' OR r.slug = $1)
 		  AND ($2 = '' OR EXISTS (
 		    SELECT 1 FROM destination_categories dc2
@@ -74,7 +74,7 @@ func (r *Repository) List(ctx context.Context, region, category string, limit, o
 func (r *Repository) Featured(ctx context.Context) ([]FeaturedDestination, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id::text, slug, name, tagline, uniqueness, altitude_m, rating
-		FROM destinations WHERE is_featured = true AND is_published = true
+		FROM destinations WHERE is_featured = true AND is_published = true AND is_deleted = false
 		ORDER BY rating DESC LIMIT 5
 	`)
 	if err != nil {
@@ -102,7 +102,7 @@ func (r *Repository) Trending(ctx context.Context) ([]TrendingDestination, error
 		         WHERE i.destination_id = d.id
 		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
 		FROM destinations d
-		WHERE d.is_published = true
+		WHERE d.is_published = true AND d.is_deleted = false
 		ORDER BY d.is_featured DESC, d.rating DESC
 		LIMIT 10
 	`)
@@ -128,7 +128,7 @@ func (r *Repository) Nearby(ctx context.Context, lng, lat, radius float64, limit
 		SELECT id::text, slug, name, district, altitude_m, rating,
 		       ROUND(ST_Distance(location, ST_GeogFromText('POINT(' || $1 || ' ' || $2 || ')'))::numeric / 1000, 1) AS km
 		FROM destinations
-		WHERE is_published = true
+		WHERE is_published = true AND is_deleted = false
 		  AND ST_DWithin(location, ST_GeogFromText('POINT(' || $1 || ' ' || $2 || ')'), $3 * 1000)
 		ORDER BY location <-> ST_GeogFromText('POINT(' || $1 || ' ' || $2 || ')')
 		LIMIT $4
@@ -160,7 +160,7 @@ func (r *Repository) Bbox(ctx context.Context, minLng, minLat, maxLng, maxLat fl
 		FROM destinations d
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
 		LEFT JOIN categories c ON c.id = dc.category_id
-		WHERE d.is_published = true
+		WHERE d.is_published = true AND d.is_deleted = false
 		  AND ST_Within(d.location::geometry,
 		    ST_MakeEnvelope($1, $2, $3, $4, 4326))
 		GROUP BY d.id
@@ -197,7 +197,7 @@ func (r *Repository) GetBySlug(ctx context.Context, slug string) (*Destination, 
 		       (SELECT url FROM images i
 		         WHERE i.destination_id = d.id
 		         ORDER BY i.is_hero DESC, i.sort_order, i.created_at LIMIT 1)
-		FROM destinations d WHERE d.slug = $1 AND d.is_published = true
+		FROM destinations d WHERE d.slug = $1 AND d.is_published = true AND d.is_deleted = false
 	`, slug).Scan(
 		&d.ID, &d.Slug, &d.Name, &d.NameUrdu, &d.NameHindi, &d.District,
 		&d.Tagline, &d.Uniqueness, &d.Description,
@@ -274,7 +274,9 @@ func (r *Repository) AdminList(ctx context.Context, status string) ([]AdminDest,
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
-		       COALESCE(d.features, '{}'::TEXT[])
+		       COALESCE(d.features, '{}'::TEXT[]),
+		       d.tehsil, d.address, d.entry_fee_foreign_inr,
+		       d.open_hours, d.closure_dates::text[], d.emergency_contacts
 		FROM destinations d
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
@@ -303,6 +305,8 @@ func (r *Repository) AdminList(ctx context.Context, status string) ([]AdminDest,
 			&d.Permits, &d.RequiresPermit, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 			&d.NetworkCoverage, &d.Practical,
 			&d.Categories, &d.Activities, &d.Features,
+			&d.Tehsil, &d.Address, &d.EntryFeeForeign,
+			&d.OpenHours, &d.ClosureDates, &d.EmergencyContacts,
 		); err != nil {
 			return nil, err
 		}
@@ -323,7 +327,9 @@ func (r *Repository) AdminGet(ctx context.Context, id string) (*AdminDest, error
 		       d.network_coverage, d.practical,
 		       COALESCE(array_agg(DISTINCT c.slug) FILTER (WHERE c.slug IS NOT NULL), '{}'),
 		       COALESCE(array_agg(DISTINCT a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}'),
-		       COALESCE(d.features, '{}'::TEXT[])
+		       COALESCE(d.features, '{}'::TEXT[]),
+		       d.tehsil, d.address, d.entry_fee_foreign_inr,
+		       d.open_hours, d.closure_dates::text[], d.emergency_contacts
 		FROM destinations d
 		LEFT JOIN regions r ON r.id = d.region_id
 		LEFT JOIN destination_categories dc ON dc.destination_id = d.id
@@ -340,6 +346,8 @@ func (r *Repository) AdminGet(ctx context.Context, id string) (*AdminDest, error
 		&d.Permits, &d.RequiresPermit, &d.IsPublished, &d.IsFeatured, &d.IsDeleted,
 		&d.NetworkCoverage, &d.Practical,
 		&d.Categories, &d.Activities, &d.Features,
+		&d.Tehsil, &d.Address, &d.EntryFeeForeign,
+		&d.OpenHours, &d.ClosureDates, &d.EmergencyContacts,
 	)
 	if err != nil {
 		return nil, err
@@ -359,14 +367,16 @@ func (r *Repository) AdminCreate(ctx context.Context, in AdminDestInput) (string
 			 distance_from_srinagar_km, entry_fee_inr, permits,
 			 network_coverage, practical,
 			 is_published, is_featured, features,
-			 requires_permit, has_entry_fee)
+			 requires_permit, has_entry_fee, tehsil, address, entry_fee_foreign_inr,
+			 open_hours, closure_dates, emergency_contacts)
 		VALUES ($1, $2, $3, $4,
 			(SELECT id FROM regions WHERE slug = $5),
 			$6, $7, $8, $9,
 			CASE WHEN $10::float8 IS NOT NULL AND $11::float8 IS NOT NULL
 			     THEN ST_SetSRID(ST_MakePoint($10, $11), 4326)::geography
 			     ELSE NULL END,
-			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+			$12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27,
+			$28, $29::text[]::date[], $30)
 		RETURNING id::text
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
@@ -375,6 +385,8 @@ func (r *Repository) AdminCreate(ctx context.Context, in AdminDestInput) (string
 		in.NetworkCoverage, in.Practical,
 		in.IsPublished, in.IsFeatured, in.Features,
 		in.RequiresPermit, in.HasEntryFee,
+		in.Tehsil, in.Address, in.EntryFeeForeign,
+		in.OpenHours, in.ClosureDates, in.EmergencyContacts,
 	).Scan(&id)
 	if err != nil {
 		return "", err
@@ -413,8 +425,10 @@ func (r *Repository) AdminUpdate(ctx context.Context, id string, in AdminDestInp
 			is_published = $20, is_featured = $21,
 			features = $22,
 			requires_permit = $23, has_entry_fee = $24,
+			tehsil = $25, address = $26, entry_fee_foreign_inr = $27,
+			open_hours = $28, closure_dates = $29::text[]::date[], emergency_contacts = $30,
 			updated_at = now()
-		WHERE id = $25
+		WHERE id = $31
 	`, in.Name, in.NameUrdu, in.NameHindi, in.Slug, in.RegionSlug,
 		in.District, in.Tagline, in.Uniqueness, in.Description,
 		in.Lng, in.Lat, in.AltitudeM, in.BestMonths, in.SeasonType,
@@ -422,6 +436,8 @@ func (r *Repository) AdminUpdate(ctx context.Context, id string, in AdminDestInp
 		in.NetworkCoverage, in.Practical,
 		in.IsPublished, in.IsFeatured, in.Features,
 		in.RequiresPermit, in.HasEntryFee,
+		in.Tehsil, in.Address, in.EntryFeeForeign,
+		in.OpenHours, in.ClosureDates, in.EmergencyContacts,
 		id,
 	)
 	if err != nil {

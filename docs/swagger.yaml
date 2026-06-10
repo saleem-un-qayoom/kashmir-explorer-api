@@ -26,7 +26,11 @@ definitions:
       title:
         type: string
       valid_hours:
+        description: expiry as a relative window
         type: integer
+      valid_until:
+        description: OR an absolute date/timestamp (takes precedence)
+        type: string
     type: object
   internal_advisory.Advisory:
     properties:
@@ -220,6 +224,15 @@ definitions:
       type:
         type: string
     type: object
+  internal_booking.VerifyPaymentInput:
+    properties:
+      razorpay_order_id:
+        type: string
+      razorpay_payment_id:
+        type: string
+      razorpay_signature:
+        type: string
+    type: object
   internal_crowd.Density:
     properties:
       active_trekkers:
@@ -333,6 +346,8 @@ definitions:
         items:
           type: string
         type: array
+      address:
+        type: string
       altitude_m:
         type: integer
       best_months:
@@ -343,12 +358,24 @@ definitions:
         items:
           type: string
         type: array
+      closure_dates:
+        description: ISO dates (YYYY-MM-DD)
+        items:
+          type: string
+        type: array
       description:
         type: string
       distance_from_srinagar_km:
         type: integer
       district:
         type: string
+      emergency_contacts:
+        description: '[{label,phone}]'
+        items:
+          type: integer
+        type: array
+      entry_fee_foreign_inr:
+        type: integer
       entry_fee_inr:
         type: integer
       features:
@@ -380,6 +407,11 @@ definitions:
         items:
           type: integer
         type: array
+      open_hours:
+        description: '[{label,hours}]'
+        items:
+          type: integer
+        type: array
       permits:
         items:
           type: string
@@ -402,6 +434,8 @@ definitions:
         type: string
       tagline:
         type: string
+      tehsil:
+        type: string
       uniqueness:
         type: string
     type: object
@@ -411,6 +445,8 @@ definitions:
         items:
           type: string
         type: array
+      address:
+        type: string
       altitude_m:
         type: integer
       best_months:
@@ -421,12 +457,24 @@ definitions:
         items:
           type: string
         type: array
+      closure_dates:
+        description: ISO dates (YYYY-MM-DD)
+        items:
+          type: string
+        type: array
       description:
         type: string
       distance_from_srinagar_km:
         type: integer
       district:
         type: string
+      emergency_contacts:
+        description: '[{label,phone}]'
+        items:
+          type: integer
+        type: array
+      entry_fee_foreign_inr:
+        type: integer
       entry_fee_inr:
         type: integer
       features:
@@ -454,6 +502,11 @@ definitions:
         items:
           type: integer
         type: array
+      open_hours:
+        description: '[{label,hours}]'
+        items:
+          type: integer
+        type: array
       permits:
         items:
           type: string
@@ -471,6 +524,8 @@ definitions:
       slug:
         type: string
       tagline:
+        type: string
+      tehsil:
         type: string
       uniqueness:
         type: string
@@ -784,21 +839,14 @@ definitions:
     type: object
   internal_mapconfig.Config:
     properties:
-      engine:
-        description: 'Engine is the map renderer: "cesium" (free CesiumJS globe) or
-          "mapbox".'
-        type: string
       terrain_exaggeration:
-        description: TerrainExaggeration scales terrain relief (0–3, both engines
-          honour it).
+        description: TerrainExaggeration scales terrain relief (0–3).
         type: number
       updated_at:
         type: string
     type: object
   internal_mapconfig.ConfigInput:
     properties:
-      engine:
-        type: string
       terrain_exaggeration:
         type: number
     type: object
@@ -1276,6 +1324,8 @@ definitions:
         type: array
       rating:
         type: number
+      requires_permit:
+        type: boolean
       review_count:
         type: integer
       route_type:
@@ -1437,6 +1487,8 @@ definitions:
         type: array
       rating:
         type: number
+      requires_permit:
+        type: boolean
       review_count:
         type: integer
       route_type:
@@ -3447,6 +3499,48 @@ paths:
       summary: Cancel a booking
       tags:
       - bookings
+  /v1/bookings/{id}/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the client-side payment signature and marks the booking
+        confirmed. Idempotent with the webhook.
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Razorpay handshake
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_booking.VerifyPaymentInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Confirm a booking from the Razorpay checkout success callback
+      tags:
+      - bookings
   /v1/bookings/{id}/wallet:
     get:
       parameters:
@@ -4235,7 +4329,7 @@ paths:
                 data:
                   $ref: '#/definitions/internal_mapconfig.Config'
               type: object
-      summary: Get the active map configuration (engine + terrain)
+      summary: Get the active map configuration
       tags:
       - map-config
   /v1/me:
@@ -5170,7 +5264,7 @@ paths:
             $ref: '#/definitions/github_com_kashmir-explorer_api_pkg_response.Envelope'
       security:
       - BearerAuth: []
-      summary: Get a presigned R2 upload URL
+      summary: Get a presigned upload URL
       tags:
       - upload
   /v1/users/{id}:

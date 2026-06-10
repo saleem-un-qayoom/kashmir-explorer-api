@@ -271,6 +271,7 @@ func registerAuthed(r chi.Router, d Deps) {
 			r.Get("/", d.Booking.List)
 			r.Post("/", d.Booking.Create)
 			r.Get("/{id}", d.Booking.Get)
+			r.Post("/{id}/verify", d.Booking.VerifyPayment)
 			r.Post("/{id}/cancel", d.Booking.Cancel)
 		})
 

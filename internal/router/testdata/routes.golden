@@ -134,6 +134,7 @@ POST	/v1/auth/phone/verify
 POST	/v1/auth/refresh
 POST	/v1/bookings/
 POST	/v1/bookings/{id}/cancel
+POST	/v1/bookings/{id}/verify
 POST	/v1/destinations/{slug}/reviews
 POST	/v1/groups
 POST	/v1/groups/join

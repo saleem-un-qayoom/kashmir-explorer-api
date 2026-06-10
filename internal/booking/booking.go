@@ -103,19 +103,16 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nights := 1
+	span := 1
 	if body.EndDate != "" {
 		start, _ := time.Parse("2006-01-02", body.StartDate)
 		end, _ := time.Parse("2006-01-02", body.EndDate)
 		if d := int(end.Sub(start).Hours() / 24); d > 0 {
-			nights = d
+			span = d
 		}
 	}
 
-	base := priceINR
-	if unit == "per-night" {
-		base = priceINR * nights
-	}
+	base := computeBase(unit, priceINR, body.Guests, span)
 	gst := base * 18 / 100
 	fee := base * 3 / 100
 	total := base + gst + fee
@@ -266,6 +263,65 @@ func (s *Service) Cancel(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, map[string]string{"status": "cancelled"})
 }
 
+// VerifyPaymentInput is the handshake the mobile client returns from the
+// Razorpay checkout success callback.
+type VerifyPaymentInput struct {
+	RazorpayOrderID   string `json:"razorpay_order_id"`
+	RazorpayPaymentID string `json:"razorpay_payment_id"`
+	RazorpaySignature string `json:"razorpay_signature"`
+}
+
+// VerifyPayment godoc
+// @Summary  Confirm a booking from the Razorpay checkout success callback
+// @Description Verifies the client-side payment signature and marks the booking confirmed. Idempotent with the webhook.
+// @Tags     bookings
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    id   path string                    true "Booking ID"
+// @Param    body body booking.VerifyPaymentInput true "Razorpay handshake"
+// @Success  200 {object} response.Envelope
+// @Failure  400 {object} response.Envelope
+// @Failure  401 {object} response.Envelope
+// @Failure  404 {object} response.Envelope
+// @Router   /v1/bookings/{id}/verify [post]
+func (s *Service) VerifyPayment(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userID := mw.UserID(r)
+
+	var body VerifyPaymentInput
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		response.BadRequest(w, "invalid body")
+		return
+	}
+	if body.RazorpayOrderID == "" || body.RazorpayPaymentID == "" || body.RazorpaySignature == "" {
+		response.BadRequest(w, "razorpay_order_id, razorpay_payment_id, razorpay_signature required")
+		return
+	}
+
+	// Reject forged success callbacks: HMAC(order|payment, key_secret).
+	if !s.rp.VerifyPaymentSignature(body.RazorpayOrderID, body.RazorpayPaymentID, body.RazorpaySignature) {
+		response.Unauthorized(w, "payment signature mismatch")
+		return
+	}
+
+	// Confirm only this user's booking for this order. Idempotent with the
+	// webhook (re-confirming an already-confirmed row is a no-op).
+	ct, err := s.pool.Exec(r.Context(), `
+		UPDATE bookings SET status='confirmed', razorpay_payment_id=$1, updated_at=now()
+		WHERE id=$2 AND user_id=$3 AND razorpay_order_id=$4 AND status IN ('pending','confirmed')
+	`, body.RazorpayPaymentID, id, userID, body.RazorpayOrderID)
+	if err != nil {
+		response.Internal(w, err)
+		return
+	}
+	if ct.RowsAffected() == 0 {
+		response.NotFound(w, "booking not found")
+		return
+	}
+	response.OK(w, map[string]string{"id": id, "status": "confirmed"})
+}
+
 // RazorpayWebhook godoc
 // @Summary  Razorpay payment webhook (HMAC-verified)
 // @Tags     webhooks
@@ -316,6 +372,31 @@ func (s *Service) RazorpayWebhook(w http.ResponseWriter, r *http.Request) {
 		`, payload.Payload.Payment.Entity.OrderID)
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+// computeBase prices a booking from the provider's pricing unit.
+//
+//	per-person        → price × guests
+//	per-night/per-day → price × span (date range in days, ≥ 1)
+//	per-trip/per-hour → flat price (no per-unit input is captured)
+//
+// guests and span are clamped to ≥ 1 so a malformed request can never
+// zero-out the charge. Unknown units fall back to a flat price.
+func computeBase(unit string, price, guests, span int) int {
+	if guests < 1 {
+		guests = 1
+	}
+	if span < 1 {
+		span = 1
+	}
+	switch unit {
+	case "per-person":
+		return price * guests
+	case "per-night", "per-day":
+		return price * span
+	default: // per-trip, per-hour, or anything unexpected
+		return price
+	}
 }
 
 func randInt(max int) int {

@@ -91,7 +91,7 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 			           + similarity(LOWER(d.name || ' ' || COALESCE(d.tagline, '')), LOWER($2::text)) * 0.3
 			         AS score
 			  FROM destinations d
-			  WHERE d.is_published = true AND d.embedding IS NOT NULL
+			  WHERE d.is_published = true AND d.is_deleted = false AND d.embedding IS NOT NULL
 			    AND ($3 = '' OR EXISTS (SELECT 1 FROM regions r WHERE r.id = d.region_id AND r.slug = $3))
 			    AND ($4 = 0 OR d.altitude_m IS NULL OR d.altitude_m <= $4)
 			    AND ($5 OR COALESCE(array_length(d.permits, 1), 0) = 0)
@@ -131,7 +131,7 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 		rows, err := s.pool.Query(r.Context(), `
 			SELECT 'destination', id::text, slug, name, tagline, district, altitude_m,
 			       similarity(LOWER(name || ' ' || COALESCE(tagline, '')), LOWER($1)) AS score
-			FROM destinations WHERE is_published = true
+			FROM destinations WHERE is_published = true AND is_deleted = false
 			  AND similarity(LOWER(name || ' ' || COALESCE(tagline, '')), LOWER($1)) > 0.1
 			ORDER BY score DESC
 			LIMIT $2

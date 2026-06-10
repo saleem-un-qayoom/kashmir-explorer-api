@@ -106,66 +106,78 @@ type Region struct {
 // AdminDest is the full admin shape (includes unpublished/deleted rows and the
 // extra editorial fields not exposed publicly).
 type AdminDest struct {
-	ID              string          `json:"id"`
-	Slug            string          `json:"slug"`
-	Name            string          `json:"name"`
-	NameUrdu        *string         `json:"name_urdu"`
-	NameHindi       *string         `json:"name_hindi"`
-	District        *string         `json:"district"`
-	RegionSlug      *string         `json:"region_slug"`
-	Tagline         *string         `json:"tagline"`
-	Uniqueness      *string         `json:"uniqueness"`
-	Description     *string         `json:"description"`
-	Lat             float64         `json:"lat"`
-	Lng             float64         `json:"lng"`
-	AltitudeM       *int            `json:"altitude_m"`
-	BestMonths      []int           `json:"best_months"`
-	SeasonType      *string         `json:"season_type"`
-	Rating          float64         `json:"rating"`
-	ReviewCount     int             `json:"review_count"`
-	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
-	EntryFee        int             `json:"entry_fee_inr"`
-	HasEntryFee     bool            `json:"has_entry_fee"`
-	Permits         []string        `json:"permits"`
-	RequiresPermit  bool            `json:"requires_permit"`
-	Activities      []string        `json:"activities"`
-	NetworkCoverage json.RawMessage `json:"network_coverage"`
-	Practical       json.RawMessage `json:"practical"`
-	Categories      []string        `json:"categories"`
-	IsPublished     bool            `json:"is_published"`
-	IsFeatured      bool            `json:"is_featured"`
-	IsDeleted       bool            `json:"is_deleted"`
-	Features        []string        `json:"features"` // AllTrails-style tags
+	ID                string          `json:"id"`
+	Slug              string          `json:"slug"`
+	Name              string          `json:"name"`
+	NameUrdu          *string         `json:"name_urdu"`
+	NameHindi         *string         `json:"name_hindi"`
+	District          *string         `json:"district"`
+	Tehsil            *string         `json:"tehsil"`
+	Address           *string         `json:"address"`
+	EntryFeeForeign   *int            `json:"entry_fee_foreign_inr"`
+	OpenHours         json.RawMessage `json:"open_hours"`         // [{label,hours}]
+	ClosureDates      []string        `json:"closure_dates"`      // ISO dates (YYYY-MM-DD)
+	EmergencyContacts json.RawMessage `json:"emergency_contacts"` // [{label,phone}]
+	RegionSlug        *string         `json:"region_slug"`
+	Tagline           *string         `json:"tagline"`
+	Uniqueness        *string         `json:"uniqueness"`
+	Description       *string         `json:"description"`
+	Lat               float64         `json:"lat"`
+	Lng               float64         `json:"lng"`
+	AltitudeM         *int            `json:"altitude_m"`
+	BestMonths        []int           `json:"best_months"`
+	SeasonType        *string         `json:"season_type"`
+	Rating            float64         `json:"rating"`
+	ReviewCount       int             `json:"review_count"`
+	DistFromSgr       *int            `json:"distance_from_srinagar_km"`
+	EntryFee          int             `json:"entry_fee_inr"`
+	HasEntryFee       bool            `json:"has_entry_fee"`
+	Permits           []string        `json:"permits"`
+	RequiresPermit    bool            `json:"requires_permit"`
+	Activities        []string        `json:"activities"`
+	NetworkCoverage   json.RawMessage `json:"network_coverage"`
+	Practical         json.RawMessage `json:"practical"`
+	Categories        []string        `json:"categories"`
+	IsPublished       bool            `json:"is_published"`
+	IsFeatured        bool            `json:"is_featured"`
+	IsDeleted         bool            `json:"is_deleted"`
+	Features          []string        `json:"features"` // AllTrails-style tags
 }
 
 // AdminDestInput is the create/update request body for a destination.
 type AdminDestInput struct {
-	Name            string          `json:"name"`
-	NameUrdu        *string         `json:"name_urdu"`
-	NameHindi       *string         `json:"name_hindi"`
-	Slug            string          `json:"slug"`
-	RegionSlug      string          `json:"region_slug"`
-	District        *string         `json:"district"`
-	Tagline         *string         `json:"tagline"`
-	Uniqueness      *string         `json:"uniqueness"`
-	Lat             float64         `json:"lat"`
-	Lng             float64         `json:"lng"`
-	AltitudeM       *int            `json:"altitude_m"`
-	BestMonths      []int           `json:"best_months"`
-	SeasonType      *string         `json:"season_type"`
-	DistFromSgr     *int            `json:"distance_from_srinagar_km"`
-	EntryFee        int             `json:"entry_fee_inr"`
-	HasEntryFee     bool            `json:"has_entry_fee"`
-	Permits         []string        `json:"permits"`
-	RequiresPermit  bool            `json:"requires_permit"`
-	Activities      []string        `json:"activities"`
-	NetworkCoverage json.RawMessage `json:"network_coverage"`
-	Practical       json.RawMessage `json:"practical"`
-	Categories      []string        `json:"categories"`
-	IsPublished     bool            `json:"is_published"`
-	IsFeatured      bool            `json:"is_featured"`
-	Description     *string         `json:"description"`
-	Features        []string        `json:"features"` // AllTrails-style tags (migration 0010)
+	Name              string          `json:"name"`
+	NameUrdu          *string         `json:"name_urdu"`
+	NameHindi         *string         `json:"name_hindi"`
+	Slug              string          `json:"slug"`
+	RegionSlug        string          `json:"region_slug"`
+	District          *string         `json:"district"`
+	Tehsil            *string         `json:"tehsil"`
+	Address           *string         `json:"address"`
+	EntryFeeForeign   *int            `json:"entry_fee_foreign_inr"`
+	OpenHours         json.RawMessage `json:"open_hours"`         // [{label,hours}]
+	ClosureDates      []string        `json:"closure_dates"`      // ISO dates (YYYY-MM-DD)
+	EmergencyContacts json.RawMessage `json:"emergency_contacts"` // [{label,phone}]
+	Tagline           *string         `json:"tagline"`
+	Uniqueness        *string         `json:"uniqueness"`
+	Lat               float64         `json:"lat"`
+	Lng               float64         `json:"lng"`
+	AltitudeM         *int            `json:"altitude_m"`
+	BestMonths        []int           `json:"best_months"`
+	SeasonType        *string         `json:"season_type"`
+	DistFromSgr       *int            `json:"distance_from_srinagar_km"`
+	EntryFee          int             `json:"entry_fee_inr"`
+	HasEntryFee       bool            `json:"has_entry_fee"`
+	Permits           []string        `json:"permits"`
+	RequiresPermit    bool            `json:"requires_permit"`
+	Activities        []string        `json:"activities"`
+	NetworkCoverage   json.RawMessage `json:"network_coverage"`
+	Practical         json.RawMessage `json:"practical"`
+	Categories        []string        `json:"categories"`
+	IsPublished       bool            `json:"is_published"`
+	IsFeatured        bool            `json:"is_featured"`
+	Description       *string         `json:"description"`
+	Features          []string        `json:"features"` // AllTrails-style tags (migration 0010)
 }
 
 // CategoryInput is the create/update body for a category.
