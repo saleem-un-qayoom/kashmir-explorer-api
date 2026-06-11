@@ -56,6 +56,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
 	"github.com/kashmir-explorer/api/internal/theme"
+	"github.com/kashmir-explorer/api/internal/tiles"
 	"github.com/kashmir-explorer/api/internal/trek"
 	"github.com/kashmir-explorer/api/internal/upload"
 	"github.com/kashmir-explorer/api/internal/user"
@@ -163,6 +164,7 @@ func main() {
 		HomeHero:     homehero.NewService(pool),
 		Theme:        theme.NewService(pool),
 		MapConfig:    mapconfig.NewService(pool),
+		Tiles:        tiles.NewService(cfg.ContourTilesDir),
 		Report:       report.NewService(pool),
 		Review:       review.NewService(pool),
 		Social:       social.NewService(pool),

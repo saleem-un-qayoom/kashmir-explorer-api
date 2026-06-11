@@ -26,6 +26,7 @@ type Config struct {
 	AnthropicModel  string
 	VoyageKey       string // text embeddings for pgvector
 	ApplePassTypeID string // Apple Wallet pass type identifier
+	ContourTilesDir string // pre-built contour vector tiles ({z}/{x}/{y}.pbf)
 
 	// External advisory sources polled by internal/advisory. Set to an empty
 	// string to disable that source. Endpoints are not always stable — leave
@@ -117,6 +118,7 @@ func Load() (*Config, error) {
 		AnthropicModel:  env("ANTHROPIC_MODEL", "claude-sonnet-4-7-20251101"),
 		VoyageKey:       os.Getenv("VOYAGE_API_KEY"),
 		ApplePassTypeID: env("APPLE_PASS_TYPE_ID", "pass.app.kashmir.explorer"),
+		ContourTilesDir: env("CONTOUR_TILES_DIR", "data/contour-tiles"),
 
 		NDMAURL: env("NDMA_URL", "https://sachet.ndma.gov.in/cap_public_website/getAllActiveWarnings"),
 		IMDURL:  env("IMD_URL", "https://mausam.imd.gov.in/backend/website/district-level-warning"),

@@ -45,6 +45,7 @@ import (
 	"github.com/kashmir-explorer/api/internal/subscription"
 	syncpkg "github.com/kashmir-explorer/api/internal/sync"
 	"github.com/kashmir-explorer/api/internal/theme"
+	"github.com/kashmir-explorer/api/internal/tiles"
 	"github.com/kashmir-explorer/api/internal/trek"
 	"github.com/kashmir-explorer/api/internal/upload"
 	"github.com/kashmir-explorer/api/internal/user"
@@ -89,6 +90,7 @@ type Deps struct {
 	HomeHero     *homehero.Service
 	Theme        *theme.Service
 	MapConfig    *mapconfig.Service
+	Tiles        *tiles.Service
 	Report       *report.Service
 	Review       *review.Service
 	Social       *social.Service
@@ -246,6 +248,9 @@ func registerPublic(r chi.Router, d Deps) {
 
 	// App-wide map engine selection (public read; mobile picks the renderer).
 	r.Get("/map-config", d.MapConfig.Get)
+
+	// Self-hosted contour vector tiles for the mobile outdoor map style.
+	r.Get("/tiles/contours/{z}/{x}/{y}.pbf", d.Tiles.Contour)
 
 	r.Route("/ai", func(r chi.Router) {
 		// LLM calls are the most expensive endpoints we have — keep them tight.
